@@ -1,0 +1,17 @@
+[
+	{
+		"airStationIRI": "http://www.theworldavatar.com/ontology/ontostation/OntoStation.owl#virtualsensor1",
+		"lng": "103.864237",
+		"lat": "1.267135"
+	},
+	{
+		"airStationIRI": "http://www.theworldavatar.com/ontology/ontostation/OntoStation.owl#virtualsensor2",
+		"lng": "103.758534",
+		"lat": "1.270980"
+	},
+	{
+		"airStationIRI": "http://www.theworldavatar.com/ontology/ontostation/OntoStation.owl#virtualsensor3",
+		"lng": "103.980044",
+		"lat": "1.313072"
+	}
+]
