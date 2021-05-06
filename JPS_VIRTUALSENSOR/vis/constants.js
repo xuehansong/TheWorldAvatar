@@ -1,5 +1,5 @@
 /**
-* HTML templates.
+* HTML templates and constants.
 */
 
 // On existing sensor hover
@@ -26,3 +26,31 @@ const newSensorTemplate = `
 		</tr>
 	</table>	
 `;
+
+// Array of possible pollutant species for selection
+const species = [
+	["O\u2083", "O3"],
+	["CO", "CO"],
+	["CO\u2082", "CO2"],
+	["NO", "NO"],
+	["NO\u2082", "NO2"],
+	["NO\u2093", "NOx"], 
+	["SO\u2082", "SO2"], 
+	["HC", "HC"],
+	["PM1", "PM1"],
+	["PM2.5", "PM2.5"],
+	["PM10", "PM10"],
+];
+
+
+// Array of possible heights for selection
+const heights = [
+	["100m", "100"],
+	["200m", "200"],
+	["300m", "300"],
+	["400m", "400"],
+	["400m", "500"],
+];
+
+// Months
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

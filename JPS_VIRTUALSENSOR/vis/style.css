@@ -32,6 +32,20 @@ h3 {
 	width: calc(100% - 405px);
 }
 
+#controlsContainer button {
+	width: 100px;
+	height: 25px;
+}
+
+#controlContainer p {
+	font-size: 85%;
+	color: grey;
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-top: 10px;
+	padding-bottom: 20px;
+}
+
 #side-panel {
 	text-align: center; 
 	box-sizing: border-box; 
@@ -91,7 +105,7 @@ h3 {
 	font-style: italic;
 }
 
-#chartContainer {
+#controlContainer {
 	width: auto;
 	height: 350px;
 	margin-right: 10px;
@@ -121,6 +135,21 @@ h3 {
 
 .xlabel {
 	font-size: 10pt;
+}
+
+.select-css {
+	width: 100%;
+	height: 25px;
+	max-width: 100%;
+	text-align: right;
+	text-align-last: right;
+	color: #2277b4;
+}
+
+.select-css option {
+	text-align: right;
+	text-align-last: right;
+	color: #2277b4;
 }
 
 #dataTable {

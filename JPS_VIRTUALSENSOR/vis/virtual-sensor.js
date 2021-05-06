@@ -16,6 +16,10 @@ var popup = null;
 // Cached GeoJSON data on sensor locations
 var sensors = null;
 
+// Details of the currently selected sensor (could be null)
+var currentSensorIRI = null;
+var currentSensorCoords = null;
+
 // Reset
 function reset() {
 	var titleContainer = document.getElementById('titleContainer');
@@ -89,14 +93,16 @@ function plotSensors(allSensors) {
 *	iri: IRI of sensor to be selected.
 */
 function setSensorSelectionState(iri) {
-	for(var i = 0; i < sensors["features"].length; i++) {
-		var tempIRI = sensors["features"][i].properties["iri"];
-		if(tempIRI === iri) {
-			sensors["features"][i].properties["state"] = "selected";
-		} else {
-			sensors["features"][i].properties["state"] = "unselected";
+	if(sensors != null) {
+		for(var i = 0; i < sensors["features"].length; i++) {
+			var tempIRI = sensors["features"][i].properties["iri"];
+			if(tempIRI === iri) {
+				sensors["features"][i].properties["state"] = "selected";
+			} else {
+				sensors["features"][i].properties["state"] = "unselected";
+			}
 		}
-	}
+	}	
 	
 	// Replot existing sensors
 	plotSensors(sensors);
@@ -167,9 +173,6 @@ function initialiseListeners() {
 			coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
 		}
 		
-		console.log(coordinates);
-
-
 		// Run on-selection logic
 		var iri = e.features[0].properties["iri"];
 		selectSensor(coordinates, iri);
@@ -183,6 +186,9 @@ function initialiseListeners() {
 *	iri: IRI of selected sensor.
 */
 function selectSensor(coords, iri) {
+	currentSensorIRI = iri;
+	currentSensorCoords = coords;
+	
 	// Show the side panel
 	showSidePanel();
 	
@@ -205,8 +211,19 @@ function selectSensor(coords, iri) {
 		coords, 
 		{duration: 1000, zoom: 13}
 	);
+	
+	// Get time series data for this sensor.
+	getTimeSeriesData(iri, buildTable)
 }
 
+function showSensorData() {
+	console.log("IRI: " + currentSensorIRI);
+	console.log("COORDS: " + currentSensorCoords);
+}
+
+/**
+* Displays the side panel.
+*/
 function showSidePanel() {
 	var sidePanel = document.getElementById('side-panel');
 	sidePanel.style.display = "block";
@@ -216,6 +233,45 @@ function showSidePanel() {
 		mapPanel.style.width = "calc(100% - 400px)";
 			
 		map.resize();
+	}
+	
+	// Initialise comboboxes
+	initialiseSelects();
+}
+
+// Closes the side panel
+function closePanel() {
+	var sidePanel = document.getElementById('side-panel');
+	sidePanel.style.display = "none";
+	
+	var mapPanel = document.getElementById('map');
+	mapPanel.style.width = "100%";
+	
+	if((map != null) && (typeof map !== 'undefined')) {
+		map.resize();
+	}
+	
+	currentSensorIRI = null;
+	currentSensorCoords = null;
+	setSensorSelectionState("null");
+}
+
+/**
+*	Initialise the HTML selection controls (comboboxes).
+*/
+function initialiseSelects() {
+	// Pollutants
+	var pollutantBox = document.getElementById("pollutantBox");
+	for(var i = 0; i < species.length; i++) {
+		var entry = species[i];
+		pollutantBox.options[pollutantBox.options.length] = new Option(entry[0], entry[1]);
+	}
+	
+	// Heights
+	var heightBox = document.getElementById("heightBox");
+	for(var i = 0; i < heights.length; i++) {
+		var entry = heights[i];
+		heightBox.options[heightBox.options.length] = new Option(entry[0], entry[1]);
 	}
 }
 
@@ -242,25 +298,27 @@ function createSensor(coords) {
 
 
 // Generates the raw data table	
-function buildTable(data) {
+function buildTable(json) {
+	
+	var currentSpecies = document.getElementById("pollutantBox").value;
+	var speciesData = json[currentSpecies];
+
+	var timeData = speciesData[0]["t"];
+	var concData = speciesData[1]["conc"];
 	
 	// Build the HTML table of raw data
 	var htmlTable = "<table id=\"dataTable\">";
-	htmlTable += "<tr><th>" + sampleHeadings[0] + "</th>";
-	htmlTable += "<th>" + sampleHeadings[1] + "</th></tr>";
+	htmlTable += "<tr><th>Datetime</th>";
+	htmlTable += "<th>Concentration</th></tr>";
 	
 	// Add the rows
-	for (var i = 0; i < data.length; i++) {
-		var rowData = data[i];
-		
-		// Get data (add some noise for variability)
-		var dateTime = prettyPrintDate(rowData.datetime);
-		var flow = rowData.value;
+	for (var i = 0; i < timeData.length; i++) {
+		var date = new Date(timeData[i]);
 		
 		// Build HTML row
 		htmlTable += "<tr>";
-		htmlTable += "<td>" + dateTime + "</td>";
-		htmlTable += "<td>" + roundN(flow, 2) + "</td>";
+		htmlTable += "<td>" + prettyPrintDate(date) + "</td>";
+		htmlTable += "<td>" + roundN(concData[i], 6) + "</td>";
 		htmlTable += "</tr>";
 	}
 	htmlTable += "</table>";
@@ -271,6 +329,23 @@ function buildTable(data) {
 }
 
 
+// Resets the camera
+function resetCamera() {
+	if(typeof map !== 'undefined') {
+	
+		map.flyTo({
+			curve: 1.9,
+			speed: 1.6,
+			zoom: 10,
+			pitch: 0.0,
+			bearing: 0.0,
+			center: [103.80977999427901, 1.3533492751332865]
+		});
+	}
+	
+	closePanel();
+}
+
 // Pretty print date
 function prettyPrintDate(date) {
 	var day = "" + date.getDate();
@@ -278,13 +353,15 @@ function prettyPrintDate(date) {
 	
 	var hour = "" + date.getHours();
 	var minute = "" + date.getMinutes();
+	var second = "" + date.getSeconds();
 	
 	if (day.length < 2) day = "0" + day;
 	if (month.length < 2) month = "0" + month;
 	if (hour.length < 2) hour = "0" + hour;
 	if (minute.length < 2) minute = "0" + minute;
+	if (second.length < 2) second = "0" + second;
 	
-	return addOrd(day) + " " + month + ", " + hour + ":" + minute;
+	return addOrd(day) + " " + month + ", " + hour + ":" + minute + ":" + second;
 }
 
 // Get number with ordinal

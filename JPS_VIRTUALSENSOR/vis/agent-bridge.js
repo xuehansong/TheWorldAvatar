@@ -71,6 +71,26 @@ function registerSensor(coords, allSensors) {
 	return newIRI;
 }
 
+/**
+* Returns the time series data of the sensor with the input IRI.
+*
+*	Parameters:
+*		iri: IRI of sensor.
+*		callback: function to run once data is received.
+*
+*	Returns:
+*		Time series data in JSON form.
+*/
+function getTimeSeriesData(iri, callback) {
+	// TODO:	Send request to agent to get data.
+	
+	// Asynchronously read the JSON file
+	$.getJSON("data/timeseries.json", function(json) {
+		// Pass to call back
+		callback(json);
+	});
+}
+
 function getContourData() {
 	
 }
