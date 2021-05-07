@@ -1,11 +1,6 @@
-/**
-*	TODO
+/*
+*	Main script for Virtual Sensor visualisation.
 */
-
-// Table HTML when no data is available
-const noDataTable = "<div id=\"noData\"><p>No available data.</p></div>";
-
-
 
 // Cached MapBox map object
 var map = null;
@@ -19,12 +14,19 @@ var sensors = null;
 // Details of the currently selected sensor (could be null)
 var currentSensorIRI = null;
 var currentSensorCoords = null;
+var currentContourData = null;
 
-// Reset
-function reset() {
+
+/**
+ *	Resets the state of the side panel.
+ */
+function resetSidePanel() {
 	var titleContainer = document.getElementById('titleContainer');
 	titleContainer.innerHTML = "";
 	
+	var controlContainer = document.getElementById('controlContainer');
+	controlContainer.innerHTML = "";
+
 	var subtitleContainer = document.getElementById('subtitleContainer');
 	subtitleContainer.innerHTML = "";
 	
@@ -32,24 +34,82 @@ function reset() {
 	tableContainer.innerHTML = noDataTable;
 }
 
-// Queries for locations of existing sensors and plots them on the map.
-function loadSensors(newMap) {
+
+/**
+*	Displays the side panel.
+*/
+function showSidePanel() {
+	var sidePanel = document.getElementById('side-panel');
+	sidePanel.style.display = "block";
+	
+	if((map != null) && (typeof map !== 'undefined')) {
+		var mapPanel = document.getElementById('map');
+		mapPanel.style.width = "calc(100% - 400px)";
+			
+		map.resize();
+	}
+}
+
+
+/**
+ *	Closes the side panel.
+ */
+function closeSidePanel() {
+	var sidePanel = document.getElementById('side-panel');
+	sidePanel.style.display = "none";
+	
+	var mapPanel = document.getElementById('map');
+	mapPanel.style.width = "100%";
+	
+	if((map != null) && (typeof map !== 'undefined')) {
+		map.resize();
+	}
+	
+	currentSensorIRI = null;
+	currentSensorCoords = null;
+	currentContourData = null;
+
+	setSensorSelectionState("null");
+}
+
+
+/**
+*	Hides the floating MapBox popup.
+*/
+function closePopup() {
+	if(typeof popup !== 'undefined') {
+		popup.remove();
+	}
+}
+
+
+/**
+ *	Starts the process of gathering data and plotting the locations of
+ *	existing virtual sensors.
+ *
+ * 	Parameters:
+ * 		newMap: new MapBox map instance
+ */
+function startPlottingSensors(newMap) {
 	map = newMap;
 	
-	// TODO - Query Agent for a list of existing sensors; for now, we'll
-	// read these from a static JSON file.
-	getSensors(plotSensors);
+	// Call agent-bridge.js to load sensor data and pass it to a callback
+	getSensorLocations(plotSensors);
 }
 
 /**
 *	Given a GeoJSON object containing locations and IRIs of sensors, this 
 *	function plots the locations on the map and adds interaction logic.
 *	
-*	allSensors:	GeoJSON of all existing sensors
+*	Parameters:
+*		allSensors:	GeoJSON of all existing sensors
 */
 function plotSensors(allSensors) {
 	// Cache the sensor data
 	sensors = allSensors;
+
+	// Bug out if in invalid state
+	if(sensors == null || map == null) return;
 	
 	// Add data source for sensors
 	var sourceData = map.getSource("sensors");
@@ -60,12 +120,12 @@ function plotSensors(allSensors) {
 			"type": "geojson",
 			"data": sensors
 		});
-		console.log("Added new 'sensors' data source.");
+		console.log("INFO: Added new 'sensors' source.");
 		
 	} else {
 		// Update existing data
 		sourceData.setData(sensors);
-		console.log("Updated existing 'sensors' data source.");
+		console.log("INFO: Updated existing 'sensors' source.");
 	}
 	
 	// Add layer style for sensors ()if not already added)
@@ -83,6 +143,7 @@ function plotSensors(allSensors) {
 				"circle-stroke-color": '#FFFFFF',
 			}
 		});
+		console.log("INFO: Added new 'sensorsLayer' layer.");
 	}
 }
 
@@ -102,25 +163,19 @@ function setSensorSelectionState(iri) {
 				sensors["features"][i].properties["state"] = "unselected";
 			}
 		}
+
+		console.log("INFO: Updated sensor selection states.");
 	}	
-	
+
 	// Replot existing sensors
 	plotSensors(sensors);
 }
 
-/**
-* Hides the floating MapBox popup.
-*/
-function closePopup() {
-	if(typeof popup !== 'undefined') {
-		popup.remove();
-	}
-}
 
 /**
 *	Initialises map listeners.
 */
-function initialiseListeners() {
+function initialiseMapListeners() {
 	
 	// Create a popup, but don't add it to the map yet.
 	popup = new mapboxgl.Popup({
@@ -179,11 +234,13 @@ function initialiseListeners() {
 	});
 }
 
+
 /**
-*	Logic when a virtual sensor location is selected.
+*	Logic when an existing virtual sensor is selected.
 *
-*	coords: coordinates of selected sensor.
-*	iri: IRI of selected sensor.
+*	Parameters:
+*		coords:	coordinates of selected sensor.
+*		iri:	IRI of selected sensor.
 */
 function selectSensor(coords, iri) {
 	currentSensorIRI = iri;
@@ -195,10 +252,8 @@ function selectSensor(coords, iri) {
 	// Update sensor selection state
 	setSensorSelectionState(iri);
 	
-	// Store IRI and get sensor name
-	var name = iri.split("#")[1];
-	
 	// Update labels
+	var name = iri.split("#")[1];
 	var titleContainer = document.getElementById('titleContainer');
 	titleContainer.innerHTML = name;
 	
@@ -209,86 +264,147 @@ function selectSensor(coords, iri) {
 	// Pan to this sensor
 	map.panTo(
 		coords, 
-		{duration: 1000, zoom: 13}
+		{
+			duration: 1000, 
+			zoom: 14,
+			pitch: 0.0,
+			bearing: 0.0
+		}
 	);
+
+	// Remove contour data from last selected sensor
+	removeContour();
 	
-	// Get time series data for this sensor.
-	getTimeSeriesData(iri, buildTable)
+	// Get the contour data for this sensor
+	getAllContourData(iri, function(json) {
+		currentContourData = json;
+
+		// Populate options on comboboxes
+		populateSelectControls(json);
+
+		// Get time series data for this sensor.
+		getTimeSeriesData(iri, buildTable)
+	});
+	
+	console.log("INFO: Selected sensor: " + name);
 }
 
-function showSensorData() {
-	console.log("IRI: " + currentSensorIRI);
-	console.log("COORDS: " + currentSensorCoords);
+
+/**
+ * Pans back to the currently selected sensor.
+ */
+function jumpToSensor() {
+	// Pan to this sensor
+	map.panTo(
+		currentSensorCoords, 
+		{
+			duration: 1000, 
+			zoom: 14,
+			pitch: 0.0,
+			bearing: 0.0
+		}
+	);
 }
 
 /**
-* Displays the side panel.
-*/
-function showSidePanel() {
-	var sidePanel = document.getElementById('side-panel');
-	sidePanel.style.display = "block";
-	
-	if((map != null) && (typeof map !== 'undefined')) {
-		var mapPanel = document.getElementById('map');
-		mapPanel.style.width = "calc(100% - 400px)";
-			
-		map.resize();
-	}
-	
-	// Initialise comboboxes
-	initialiseSelects();
-}
+ *	Given the JSON object containing contour data, this function
+ * 	will parse it to determine possible pollutant and height options
+ * 	and populate the relevant selection controls.
+ *
+ * 	Parameters:
+ * 		json:	Raw JSON containing all contour data
+ */
+function populateSelectControls(json) {
+	// Reset previous values
+	document.getElementById("heightBox").innerText = "";
+	document.getElementById("pollutantBox").innerText = "";
 
-// Closes the side panel
-function closePanel() {
-	var sidePanel = document.getElementById('side-panel');
-	sidePanel.style.display = "none";
-	
-	var mapPanel = document.getElementById('map');
-	mapPanel.style.width = "100%";
-	
-	if((map != null) && (typeof map !== 'undefined')) {
-		map.resize();
-	}
-	
-	currentSensorIRI = null;
-	currentSensorCoords = null;
-	setSensorSelectionState("null");
-}
+	// Get the possible heights
+	var heights = json["dz"];
 
-/**
-*	Initialise the HTML selection controls (comboboxes).
-*/
-function initialiseSelects() {
-	// Pollutants
-	var pollutantBox = document.getElementById("pollutantBox");
-	for(var i = 0; i < species.length; i++) {
-		var entry = species[i];
-		pollutantBox.options[pollutantBox.options.length] = new Option(entry[0], entry[1]);
-	}
-	
-	// Heights
+	// Add heights to heightBox select
 	var heightBox = document.getElementById("heightBox");
 	for(var i = 0; i < heights.length; i++) {
-		var entry = heights[i];
-		heightBox.options[heightBox.options.length] = new Option(entry[0], entry[1]);
+		var entry = parseFloat(heights[i]).toFixed(1);
+		heightBox.options[heightBox.options.length] = new Option(entry, i);
 	}
+
+	// Get the possible pollutants
+	var pollutantBox = document.getElementById("pollutantBox");
+
+	Object.keys(json).forEach(function(key) {
+		if(key != "dz") {
+			pollutantBox.options[pollutantBox.options.length] = new Option(key, key);
+		}
+	});
 }
+
+
+/**
+*
+*/
+function showSensorData() {
+	var pollutant = document.getElementById("pollutantBox").value;
+	var height = document.getElementById("heightBox").value;
+
+	// Find the GeoJSON data for the current pollutant and height
+	var geoJSON = findContourData(currentContourData, pollutant, height);
+
+	centerCoords(currentSensorCoords, geoJSON);
+
+	// Zoom out a little
+	map.zoomTo(
+		10,
+		{duration: 1000}
+	);
+
+	// Remove any previous contour data
+	removeContour();
+
+	// Add data source to map
+	map.addSource('contour-data', {
+		'type': 'geojson',
+		'data': geoJSON
+	});
+	
+	// Visualise contour data
+	map.addLayer({
+		'id': 'contourLayer',
+		'source': 'contour-data',
+		'type': 'fill',
+		'paint': {
+			'fill-outline-color': ['get', 'stroke'],
+			'fill-color':  ['get', 'fill'],
+			'fill-opacity':  ['get', 'fill-opacity']
+		}
+	});
+
+	console.log("INFO: Contour data added to map.");
+}
+
+/**
+ *	Removes the current contour data.
+ */
+function removeContour() {
+	if(map.getLayer('contourLayer') != null) map.removeLayer('contourLayer');
+	if(map.getSource('contour-data') != null) map.removeSource('contour-data');
+}
+
 
 /**
 *	Creates a new Virtual Sensor at the input coordinates.
 *
-*	coords: coordinates for new sensor.
+*	Parameters:
+*		coords:	coordinates for new sensor.
 */
 function createSensor(coords) {
-	console.log("New sensor at " + coords);
 	closePopup();
 		
 	// Make request to add new sensor
 	var coordsArray = JSON.parse(coords);
-	console.log(coordsArray);
 	var newIRI = registerSensor(coordsArray, sensors);
-	
+	console.log("INFO: New sensor created.");
+
 	// Replot sensors
 	plotSensors(sensors);
 	
@@ -297,9 +413,14 @@ function createSensor(coords) {
 }
 
 
-// Generates the raw data table	
+/**
+ *	Populates data table in side panel with the input time series data.
+ *
+ *	Parameters:
+ *		json: time series data in JSON form.
+ */
 function buildTable(json) {
-	
+	// Get currently selected species
 	var currentSpecies = document.getElementById("pollutantBox").value;
 	var speciesData = json[currentSpecies];
 
@@ -326,10 +447,15 @@ function buildTable(json) {
 	// Add the HTML table
 	var tableContainer = document.getElementById('tableContainer');
 	tableContainer.innerHTML = htmlTable;
+
+	console.log("INFO: Time series data added to table.");
 }
 
 
-// Resets the camera
+/**
+ *	Resets the MapBox camera back to the original position and clears
+ *	all selection states.
+ */
 function resetCamera() {
 	if(typeof map !== 'undefined') {
 	
@@ -344,35 +470,4 @@ function resetCamera() {
 	}
 	
 	closePanel();
-}
-
-// Pretty print date
-function prettyPrintDate(date) {
-	var day = "" + date.getDate();
-	var month = months[date.getMonth()];
-	
-	var hour = "" + date.getHours();
-	var minute = "" + date.getMinutes();
-	var second = "" + date.getSeconds();
-	
-	if (day.length < 2) day = "0" + day;
-	if (month.length < 2) month = "0" + month;
-	if (hour.length < 2) hour = "0" + hour;
-	if (minute.length < 2) minute = "0" + minute;
-	if (second.length < 2) second = "0" + second;
-	
-	return addOrd(day) + " " + month + ", " + hour + ":" + minute + ":" + second;
-}
-
-// Get number with ordinal
-function addOrd(n) {
-  var ords = [, 'st', 'nd', 'rd'];
-  var ord, m = n % 100;
-  return n + ((m > 10 && m < 14) ? 'th' : ords[m % 10] || 'th');
-}
-
-// Round digit to N decimal places
-function roundN(value, digits) {
-   var tenToN = 10 ** digits;
-   return (Math.round(value * tenToN)) / tenToN;
 }

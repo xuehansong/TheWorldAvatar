@@ -4,12 +4,15 @@
 <head>
 	<!-- JS libraries -->
 	<script src='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js'></script>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 	<script src='virtual-sensor.js'></script>
 	<script src='agent-bridge.js'></script>
+	<script src='data-handling.js'></script>
 	<script src='constants.js'></script>
 	
 	<!-- Stylesheets -->
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css' rel='stylesheet' />
 	<link href='style.css' rel='stylesheet' />  
 	
@@ -17,7 +20,7 @@
 	
 </head>
 
-<body>
+<body onload="closeSidePanel();">
     <div id="map"></div>
 	
 	<div id="resetContainer" onclick="resetCamera()">
@@ -27,7 +30,13 @@
 	</div>
 	
 	<div id="side-panel" style="height:100%; width:400px; float:right;">
-		<span id="closebtn" onclick="closePanel()">Hide</span>
+		<table width="95%" height="30px" style="margin:auto;">
+			<tr>
+				<td width="50%" style="text-align:left;"><span id="panbtn" onclick="jumpToSensor()">Locate</span></td>
+				<td width="50%" style="text-align:right;"><span id="closebtn" onclick="closePanel()">Close</span></td>
+			</tr>
+		</table>
+		
 		<div id="titleContainer"></div>
 		<div id="subtitleContainer"></div>
 		<div id="controlContainer">
@@ -35,11 +44,11 @@
 			<table width="90%" style="margin:auto;">
 				<tr height="30px">
 					<td width="25%" style="text-align:left;">Pollutant:</td>
-					<td width="75%"><select class="select-css" id="pollutantBox"/></td>
+					<td width="75%"><select dir="rtl" class="select-css" id="pollutantBox"/></td>
 				</tr>
 				<tr height="30px">
 					<td width="25%" style="text-align:left;">Height:</td>
-					<td width="75%"><select class="select-css" id="heightBox"/></td>
+					<td width="75%"><select dir="rtl" class="select-css" id="heightBox"/></td>
 				</tr>
 				<tr height="30px">
 					<td colspan="2" style="text-align: right;"><button onclick="showSensorData()">Show data</button></td>
@@ -61,10 +70,11 @@
             center: [103.80977999427901, 1.3533492751332865]
         });
 		
-		// Disable double-click zoome
+		// Disable double-click zoom (we will override this
+		// with other functionality later).
 		map["doubleClickZoom"].disable();
 					
-		// On load...
+		// On map load...
         map.on('load', function () {
 		
 			// Sky layer that will show when the map is highly pitched
@@ -76,15 +86,7 @@
                 }
             });
 			
-			// 3D buildings data
-			if (!map.getSource('composite')) {
-				map.addSource('composite', {
-					type: 'vector', 
-					url: 'mapbox://styles/mapbox/streets-v11'}
-				);
-			} 
-			
-			// Insert the layer beneath any symbol layer.
+			// Insert the next layer beneath any symbol layer.
 			var layers = map.getStyle().layers;
 			var labelLayerId;
 			for (var i = 0; i < layers.length; i++) {
@@ -96,12 +98,12 @@
 			
 			// Layer style for 3D buildings
             map.addLayer({
-					'id': '3d-buildings',
+					'id': 'buildingLayer',
 					'source': 'composite',
 					'source-layer': 'building',
 					'filter': ['==', 'extrude', 'true'],
 					'type': 'fill-extrusion',
-					'minzoom': 15,
+					'minzoom': 12,
 					'paint': {
 						'fill-extrusion-color': '#919191',
 						'fill-extrusion-height': [
@@ -126,16 +128,14 @@
 					}
 				},
 				labelLayerId
-			);
-			
-			// Close the side panel by default
-			closePanel();
+			);		
 		
 			// Initialise map event listeners
-			initialiseListeners();
+			initialiseMapListeners();
 			
 			// Load the existing sensors
-			loadSensors(map);			
+			startPlottingSensors(map);	
+
         });
     </script>
 </body>

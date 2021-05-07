@@ -1,6 +1,9 @@
-/**
-* HTML templates and constants.
+/*
+*	HTML templates and constants.
 */
+
+// Table HTML when no data is available
+const noDataTable = "<div id=\"noData\"><p>No data is currently available,<br>please check back later.</p></div>";
 
 // On existing sensor hover
 const sensorHoverTemplate = `
@@ -45,11 +48,19 @@ const species = [
 
 // Array of possible heights for selection
 const heights = [
-	["100m", "100"],
-	["200m", "200"],
-	["300m", "300"],
-	["400m", "400"],
-	["400m", "500"],
+	["5m", "5.0"],
+	["15m", "15.0"],
+	["27.5m", "27.5"],
+	["47.5m", "47.5"],
+	["80m", "80.0"],
+	["150m", "150.0"],
+	["350m", "350.0"],
+	["750m", "750.0"],
+	["1,250m", "1250.0"],
+	["1,750m", "1750.0"],
+	["2,250m", "2250.0"],
+	["2,750m", "2750.0"],
+	["3,250m", "3250.0"]
 ];
 
 // Months
