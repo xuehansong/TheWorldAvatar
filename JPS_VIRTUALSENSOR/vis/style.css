@@ -59,6 +59,26 @@ h3 {
 	transition: 0.5s;
 }
 
+#no-data {
+	background: lightgray;
+	border: 1px solid black;
+	display: none;
+	height: calc(100% - 175px);
+	margin: 20px;
+	display: table;
+	text-align: center;
+	width: calc(100% - 40px);
+}
+
+#no-data-inner {
+	color: black;
+	position: absolute; 
+	top: 50%;
+	width: calc(100% - 40px);
+	display: table-cell; 
+	vertical-align: middle;
+}
+
 #closebtn {
 	font-size: 14px;
 	color: #2277b4;

@@ -2,8 +2,11 @@
 *	HTML templates and constants.
 */
 
-// Table HTML when no data is available
-const noDataTable = "<div id=\"noData\"><p>No data is currently available,<br>please check back later.</p></div>";
+// HTML when no data is available
+const noDataText = "<p>No data is currently available,<br>please check back later.</p>";
+
+// HTML when data is loading
+const loadingText = "<img width='50px' src='./spinner.gif'></img><br><p>Gathering data, please wait...</p>";
 
 // On existing sensor hover
 const sensorHoverTemplate = `

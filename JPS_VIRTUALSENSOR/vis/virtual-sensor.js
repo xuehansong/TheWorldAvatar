@@ -24,14 +24,16 @@ function resetSidePanel() {
 	var titleContainer = document.getElementById('titleContainer');
 	titleContainer.innerHTML = "";
 	
-	var controlContainer = document.getElementById('controlContainer');
-	controlContainer.innerHTML = "";
-
 	var subtitleContainer = document.getElementById('subtitleContainer');
 	subtitleContainer.innerHTML = "";
-	
-	var tableContainer = document.getElementById('tableContainer');
-	tableContainer.innerHTML = noDataTable;
+
+	// Hide the inner panel
+	var innerPanel = document.getElementById('side-panel-inner');
+	innerPanel.style.display = "none";
+
+	// Show the "no-data" message
+	document.getElementById('no-data').style.display = "table";
+	document.getElementById('no-data-inner').innerHTML = noDataText;
 }
 
 
@@ -48,6 +50,8 @@ function showSidePanel() {
 			
 		map.resize();
 	}
+
+	resetSidePanel();
 }
 
 
@@ -248,6 +252,7 @@ function selectSensor(coords, iri) {
 	
 	// Show the side panel
 	showSidePanel();
+	document.getElementById('no-data-inner').innerHTML = loadingText;
 	
 	// Update sensor selection state
 	setSensorSelectionState(iri);
@@ -259,8 +264,8 @@ function selectSensor(coords, iri) {
 	
 	var locationStr = roundN(coords[0], 5) + ", " + roundN(coords[1], 5);
 	var subtitleContainer = document.getElementById('subtitleContainer');
-	subtitleContainer.innerHTML = locationStr;	
-	
+	subtitleContainer.innerHTML = locationStr;
+
 	// Pan to this sensor
 	map.panTo(
 		coords, 
@@ -278,6 +283,18 @@ function selectSensor(coords, iri) {
 	// Get the contour data for this sensor
 	getAllContourData(iri, function(json) {
 		currentContourData = json;
+
+		if(currentContourData == null) {
+			document.getElementById('no-data-inner').innerHTML = noDataText;
+			return;
+		} else {
+			// Show the inner panel
+			var innerPanel = document.getElementById('side-panel-inner');
+			innerPanel.style.display = "block";
+
+			// Hide the "no-data" message
+			document.getElementById('no-data').style.display = "none";
+		}
 
 		// Populate options on comboboxes
 		populateSelectControls(json);
