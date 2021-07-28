@@ -3,6 +3,7 @@
 #
 # Author: Michael Hillman
 
+import os
 import re
 import requests
 import xml.etree.ElementTree as ET
@@ -40,8 +41,7 @@ def getUsername():
 		Returns:
 			Username for protected endpoints
 	"""
-	return "bg_user"
-	#return os.getenv("CMCL_BLAZEGRAPH_USER")
+	return os.getenv("CMCL_BLAZEGRAPH_USER")
 
 
 def getPassword():
@@ -53,8 +53,7 @@ def getPassword():
 		Returns:
 			Username for protected endpoints
 	"""
-	return "tZWJ4W882NLDxnGFtSe9"
-	#return os.getenv("CMCL_BLAZEGRAPH_PASS")
+	return os.getenv("CMCL_BLAZEGRAPH_PASS")
 
 def buildEndpointURL(baseURL, reportedURL):
 	"""
@@ -71,7 +70,7 @@ def buildEndpointURL(baseURL, reportedURL):
 			Endpoint URL with same port as base URL
 	
 	"""
-	pattern = re.compile("namespace\/.*")
+	pattern = re.compile(r'namespace\/.*')
 	matches = pattern.findall(reportedURL)
 
 	if len(matches) > 0:
@@ -106,13 +105,12 @@ def discoverEndpoints(kgURL, **kwargs):
 
 	# Get RDF file
 	if username is not None and password is not None:
-		print("with credentials")
 		result = requests.get(finalURL, auth = HTTPBasicAuth(username, password))
 	else:
-		print("without credentials")
 		result = requests.get(finalURL)
 
 	print(result)
+	print(result.text)
 
 	# Parse result as XML and find endpoints
 	endpoints = []

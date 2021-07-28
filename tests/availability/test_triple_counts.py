@@ -3,7 +3,8 @@
 # cannot be reached, returns 0, or throws an error.
 #
 # Note that all SPARQL requests should be made using the JPS Base Library via
-# the python wrapper.
+# the python wrapper. Additionally, this test does not include checks for RDF
+# KGs as they are planned for phase out soon.
 #
 # Author: Michael Hillman
 
