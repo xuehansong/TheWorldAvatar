@@ -8,11 +8,27 @@
 # Author: Michael Hillman
 
 import json
+import pytest
 from utils.common import *
 from py4jps.resources import JpsBaseLib
 
 # SPARQL query string
 QUERY="SELECT (COUNT(*) AS ?NO_OF_TRIPLES) WHERE { ?x ?y ?z . }"
+
+# Credentials to be use for protected endpoints
+CREDENTIALS = {"username": getUsername(), "password": getPassword()}
+
+# Endpoints for development Blazegraph at CMCL
+DEV_CMCL_ENDPOINTS = discoverEndpoints("http://kg.cmclinnovations.com:81/blazegraph", **CREDENTIALS)
+
+# Endpoints for development Blazegraph_Geo at CMCL
+DEV_CMCL_GEO_ENDPOINTS = discoverEndpoints("http://kg.cmclinnovations.com:81/blazegraph_geo", **CREDENTIALS)
+
+# Endpoints for production Blazegraph at CMCL
+PROD_CMCL_ENDPOINTS = discoverEndpoints("http://kg.cmclinnovations.com/blazegraph", **CREDENTIALS)
+
+# Endpoints for production Blazegraph_Geo at CMCL
+PROD_CMCL_GEO_ENDPOINTS = discoverEndpoints("http://kg.cmclinnovations.com/blazegraph_geo", **CREDENTIALS)
 
 
 def countTriples(kgURL, **kwargs):
@@ -27,78 +43,94 @@ def countTriples(kgURL, **kwargs):
 		Returns:
 			Number of triples in namespace (or -1 if error occurs)
 	"""
+
+	print("Querying endpoint at:", kgURL)
 	jpsBaseView = getJPSGateway()
 	kgClient = jpsBaseView.RemoteKnowledgeBaseClient(kgURL)
 
+	# Get optional credentials
+	username = kwargs.get("username")
+	password = kwargs.get("password")
+
 	try:
-		# Get response as list
-		responseList = kgClient.executeQuery(QUERY).toList()
+		# Make query and get response as list
+		if username is not None and password is not None:
+			print("INFO: Running query with login credentials...")
+			kgClient.setUser(username)
+			kgClient.setPassword(password)
+			responseList = kgClient.executeQuery(QUERY).toList()
+		else:
+			print("INFO: Running query without any login credentials...")
+			responseList = kgClient.executeQuery(QUERY).toList()
 
 		# Get first entry, fix incorrect JSON
 		firstResponse = str(responseList[0])
 		firstResponse = firstResponse.replace("'", "\"")
-
+		
 		# Parse as JSON and check triple count
 		firstResponseJSON = json.loads(firstResponse)
 		tripleCount = firstResponseJSON["NO_OF_TRIPLES"]
+		print("Triple count reported as:", tripleCount)
+
 		return -1 if tripleCount is None else int(tripleCount)
+
 	except Exception as exception:
-		template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-		message = template.format(type(exception).__name__, exception.args)
-		print(message)
+		print("ERROR: Exception occured, endpoint may be offline!")
+		print(exception)
 		return -1
 
 
-def test_cmcl_dev_blazegraph_ontogasgrid():
+@pytest.mark.parametrize("endpoint", DEV_CMCL_ENDPOINTS)
+def test_dev_cmcl_blazegraph(endpoint):
 	"""
-		Checks the number of triples within the 'ontogasgrid' namespace of
-		the Blazegraph KG running on the development server at CMCL.
+		Parameterized test that should check the triple count
+		for all endpoints of CMCL's Blazegraph instance 
+		running on the development server.
+
+		Parameters:
+			endpoint - SPARQL endpoint for single namespace
 	"""
-	tripleCount = countTriples("http://kg.cmclinnovations.com:81/blazegraph/namespace/ontogasgrid/sparql")
+	tripleCount = countTriples(endpoint, **CREDENTIALS)
 	assert tripleCount > 0, "Expected number of triples to be above 0!"
 
 
-def test_cmcl_dev_blazegraph_geo_ontocropenergy():
+@pytest.mark.parametrize("endpoint", DEV_CMCL_GEO_ENDPOINTS)
+def test_dev_cmcl_blazegraph_geo(endpoint):
 	"""
-		Checks the number of triples within the 'ontocropenergy' namespace of
-		the Blazegraph_Geo KG running on the development server at CMCL.
+		Parameterized test that should check the triple count
+		for all endpoints of CMCL's Blazegraph_Geo instance 
+		running on the development server.
+
+		Parameters:
+			endpoint - SPARQL endpoint for single namespace
 	"""
-	tripleCount = countTriples("http://kg.cmclinnovations.com:81/blazegraph_geo/namespace/ontocropenergy/sparql")
+	tripleCount = countTriples(endpoint, **CREDENTIALS)
 	assert tripleCount > 0, "Expected number of triples to be above 0!"
 
 
-def test_cmcl_dev_blazegraph_geo_ontocropmapgml():
+@pytest.mark.parametrize("endpoint", PROD_CMCL_ENDPOINTS)
+def test_prod_cmcl_blazegraph(endpoint):
 	"""
-		Checks the number of triples within the 'ontocropmapgml' namespace of
-		the Blazegraph_Geo KG running on the development server at CMCL.
+		Parameterized test that should check the triple count
+		for all endpoints of CMCL's Blazegraph instance 
+		running on the production server.
+
+		Parameters:
+			endpoint - SPARQL endpoint for single namespace
 	"""
-	tripleCount = countTriples("http://kg.cmclinnovations.com:81/blazegraph_geo/namespace/ontocropmapgml/sparql")
+	tripleCount = countTriples(endpoint, **CREDENTIALS)
 	assert tripleCount > 0, "Expected number of triples to be above 0!"
 
 
-def test_cmcl_dev_blazegraph_geo_ontolanduse():
+@pytest.mark.parametrize("endpoint", PROD_CMCL_GEO_ENDPOINTS)
+def test_prod_cmcl_blazegraph_geo(endpoint):
 	"""
-		Checks the number of triples within the 'ontolanduse' namespace of
-		the Blazegraph_Geo KG running on the development server at CMCL.
+		Parameterized test that should check the triple count
+		for all endpoints of CMCL's Blazegraph_Geo instance 
+		running on the production server.
+
+		Parameters:
+			endpoint - SPARQL endpoint for single namespace
 	"""
-	tripleCount = countTriples("http://kg.cmclinnovations.com:81/blazegraph_geo/namespace/ontolanduse/sparql")
+	tripleCount = countTriples(endpoint, **CREDENTIALS)
 	assert tripleCount > 0, "Expected number of triples to be above 0!"
-
-
-def test_cmcl_prod_blazegraph_kb():
-	"""
-		Checks the number of triples within the 'kb' namespace of
-		the Blazegraph KG running on the production server at CMCL.
-	"""
-	tripleCount = countTriples("https://kg.cmclinnovations.com/blazegraph/namespace/kb/sparql")
-	assert tripleCount > 0, "Expected number of triples to be above 0!"
-
-
-def test_cmcl_prod_blazegraph_geo_landuse():
-	"""
-		Checks the number of triples within the 'landuse' namespace of
-		the Blazegraph_Geo KG running on the production server at CMCL.
-	"""
-	tripleCount = countTriples("https://kg.cmclinnovations.com/blazegraph_geo/namespace/landuse/sparql")
-	assert tripleCount > 0, "Expected number of triples to be above 0!"
-	

@@ -3,8 +3,11 @@
 #
 # Author: Michael Hillman
 
-import os
+import re
+import requests
+import xml.etree.ElementTree as ET
 from py4jps.resources import JpsBaseLib
+from requests.models import HTTPBasicAuth
 
 # Cached module view of the JPS Base Library
 JPS_BASE_VIEW = None
@@ -37,7 +40,8 @@ def getUsername():
 		Returns:
 			Username for protected endpoints
 	"""
-	return os.getenv("CMCL_BLAZEGRAPH_USER")
+	return "bg_user"
+	#return os.getenv("CMCL_BLAZEGRAPH_USER")
 
 
 def getPassword():
@@ -49,4 +53,78 @@ def getPassword():
 		Returns:
 			Username for protected endpoints
 	"""
-	return os.getenv("CMCL_BLAZEGRAPH_PASS")
+	return "tZWJ4W882NLDxnGFtSe9"
+	#return os.getenv("CMCL_BLAZEGRAPH_PASS")
+
+def buildEndpointURL(baseURL, reportedURL):
+	"""
+		Endpoints returned from the RDF file may not include the 
+		port that the KG is redirected from. If the original KG
+		URL contains a port, this function will add it to the 
+		endpoint URL.
+
+		Parameters:
+			baseURL - Original base URL for KG
+			reportedURL - endpoint URL from RDF file
+
+		Returns:
+			Endpoint URL with same port as base URL
+	
+	"""
+	pattern = re.compile("namespace\/.*")
+	matches = pattern.findall(reportedURL)
+
+	if len(matches) > 0:
+		if baseURL.endswith("/"):
+			finalEndpoint = baseURL + matches[0]
+		else:
+			finalEndpoint = baseURL + "/" + matches[0]
+		return finalEndpoint
+	else:
+		return None
+
+
+def discoverEndpoints(kgURL, **kwargs):
+	"""
+		Given the base URL of Blazegraph instance, this function
+		determines all useable namespace endpoints.
+
+		Parameters:
+			kgURL - base URL (e.g. "kg.cmclinnovations.com/blazegraph")
+			kwargs - optional parameters (e.g. "username" and "password")
+
+		Returns:
+			Array of endpoint URLs
+	"""
+	# Sanitise the URL
+	finalURL = (kgURL + "namespace") if kgURL.endswith("/") else (kgURL + "/namespace")
+	print(finalURL)
+
+	# Get optional credentials
+	username = kwargs.get("username")
+	password = kwargs.get("password")
+
+	# Get RDF file
+	if username is not None and password is not None:
+		print("with credentials")
+		result = requests.get(finalURL, auth = HTTPBasicAuth(username, password))
+	else:
+		print("without credentials")
+		result = requests.get(finalURL)
+
+	print(result)
+
+	# Parse result as XML and find endpoints
+	endpoints = []
+	xmlTree = ET.ElementTree(ET.fromstring(result.text))
+
+	for description in xmlTree.findall("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description"):	
+		endpointElement = description.find("{http://rdfs.org/ns/void#}sparqlEndpoint")
+		reportedURL = endpointElement.attrib["{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource"]
+
+		# URLs reported in the RDF may have incorrect host names
+		correctedEndpoint = buildEndpointURL(kgURL, reportedURL)
+		if correctedEndpoint is not None:
+			endpoints.append(correctedEndpoint)
+
+	return endpoints
