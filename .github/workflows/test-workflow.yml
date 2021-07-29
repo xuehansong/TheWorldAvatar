@@ -1,0 +1,44 @@
+# Name workflow
+name: Python Testing Workflow
+
+# Read only permissions
+permissions: read-all
+
+# Triggered once every 15 minutes
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 * * * *'
+
+# Listing of jobs to be run
+jobs:
+
+  # WIP - testing for now
+  python-tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    
+    # Use the environment configured with secrets
+    environment: python-test-environment
+    
+    # Set the working directory?
+    defaults:
+      run:
+        working-directory: tests
+       
+    steps:
+      # Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+        ref: 'dev-tests'
+      
+      # Configure Python
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      
+      # Output the Python version
+      - name: Display version
+        run: python -c "import sys; print(sys.version)"
+  
