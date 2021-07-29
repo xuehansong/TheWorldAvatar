@@ -1,5 +1,5 @@
 # Name workflow
-name: Python Testing Workflow
+name: Test workflow
 
 # Read only permissions
 permissions: read-all
@@ -13,7 +13,7 @@ on:
 # Listing of jobs to be run
 jobs:
 
-  # WIP - testing for now
+  # Just output the Python version for now.
   python-tests:
     name: Python Tests
     runs-on: ubuntu-latest
