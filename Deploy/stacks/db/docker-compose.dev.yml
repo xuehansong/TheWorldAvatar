@@ -9,6 +9,8 @@ services:
       context: vsftpd
     container_name: "vsftpd-${MODE}"
     image: docker.cmclinnovations.com/vsftpd:1.0.0-SNAPSHOT
+    environment:
+      PASV_ADDRESS: 77.95.36.39
     env_file:
       - vsftpd/vsftpd_credentials.env
     labels:
@@ -20,7 +22,7 @@ services:
     ports:
       - "20:20"
       - "21:21"
-      - "21110:21110"
+      - "21100-21110:21100-21110"
       
   # Blazegraph
   blazegraph:
