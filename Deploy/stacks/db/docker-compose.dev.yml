@@ -3,6 +3,25 @@ version: "3.8"
 # Services
 services:
 
+  # FTP Server
+  vsftpd:
+    build:
+      context: vsftpd
+    container_name: "vsftpd-${MODE}"
+    image: docker.cmclinnovations.com/vsftpd:1.0.0-SNAPSHOT
+    env_file:
+      - vsftpd/vsftpd_credentials.env
+    labels:
+      authors: "support@cmclinnovations"
+      builder: "${BUILDER}"
+      description: "Simple FTP server."
+      hash: "${HASH}"
+    restart: unless-stopped
+    ports:
+      - "20:20"
+      - "21:21"
+      - "21110:21110"
+      
   # Blazegraph
   blazegraph:
     ports:
