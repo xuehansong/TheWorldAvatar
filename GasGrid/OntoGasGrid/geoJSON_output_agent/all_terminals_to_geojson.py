@@ -18,7 +18,7 @@ OUTPUT_FOLDER = "/var/www/html/gas-grid"
 QUERY = """PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
   PREFIX loc:	<http://www.bigdata.com/rdf/geospatial/literals/v1#>
-  PREFIX ns:	<http://www.theworldavatar.com/ontology/ontogasgrid/gas_network_components.owl#>
+  PREFIX ns:	<http://www.theworldavatar.com/ontology/ts_backup/gas_network_components.owl#>
 
   SELECT ?location ?label
   WHERE
@@ -38,7 +38,7 @@ def initialiseGateway():
 
 	jpsBaseLibView = jpsBaseLibGW.createModuleView()
 	jpsBaseLibGW.importPackages(jpsBaseLibView, "uk.ac.cam.cares.jps.base.query.*")
-	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ontogasgrid"))
+	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ts_backup"))
 
 
 def getKGLocation(namespace):
@@ -63,7 +63,7 @@ def getKGLocation(namespace):
 
 def outputTerminals():
 	kgClient = initialiseGateway()
-	print("INFO: Using KG endpoint at", getKGLocation("ontogasgrid"))
+	print("INFO: Using KG endpoint at", getKGLocation("ts_backup"))
 
 	ret = kgClient.executeQuery(QUERY)
 

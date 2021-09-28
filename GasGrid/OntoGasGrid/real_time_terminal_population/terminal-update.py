@@ -18,15 +18,15 @@ FALLBACK_KG = "http://localhost:9999/blazegraph/"
 
 # Defining namespaces of each terminal
 TERMINAL_DICTIONARY = {
-	"BACTON IPs Terminal": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/BactonIPsTerminal>",
-	"BACTON UKCS Terminal": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/BactonUKCSTerminal>",
-	"BARROW TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/BarrowTerminal>",
-	"EASINGTON TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/EasingtonTerminal>",
-	"ISLE OF GRAIN TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/IsleofGrainTerminal>",
-	"MILFORD HAVEN TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/MilfordHavenTerminal>",
-	"ST FERGUS TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/StFergusTerminal>",
-	"TEESSIDE TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/TeessideTerminal>",
-	"THEDDLETHORPE TERMINAL": "<http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/TheddlethorpeTermin>"
+	"BACTON IPs Terminal": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/BactonIPsTerminal>",
+	"BACTON UKCS Terminal": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/BactonUKCSTerminal>",
+	"BARROW TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/BarrowTerminal>",
+	"EASINGTON TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/EasingtonTerminal>",
+	"ISLE OF GRAIN TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/IsleofGrainTerminal>",
+	"MILFORD HAVEN TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/MilfordHavenTerminal>",
+	"ST FERGUS TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/StFergusTerminal>",
+	"TEESSIDE TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/TeessideTerminal>",
+	"THEDDLETHORPE TERMINAL": "<http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/TheddlethorpeTermin>"
 }
 
 def initialiseGateway():
@@ -38,7 +38,7 @@ def initialiseGateway():
 
 	jpsBaseLibView = jpsBaseLibGW.createModuleView()
 	jpsBaseLibGW.importPackages(jpsBaseLibView, "uk.ac.cam.cares.jps.base.query.*")
-	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ontogasgrid"), getKGLocation("ontogasgrid"))
+	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ts_backup"), getKGLocation("ts_backup"))
 
 		
 def getKGLocation(namespace):
@@ -108,7 +108,7 @@ def update_triple_store(kgClient):
 	print("\nPerforming update at: ", today)
 
 	# Build the correct KG URL
-	kgURL = getKGLocation("ontogasgrid")
+	kgURL = getKGLocation("ts_backup")
 	print("Determined KG URL as", kgURL)
 		
 	# Get the flow data from CSV
@@ -131,8 +131,8 @@ def update_triple_store(kgClient):
 		
 		query = '''PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 		PREFIX rdf:	 <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-		PREFIX comp:	<http://www.theworldavatar.com/ontology/ontogasgrid/gas_network_components.owl#>
-		PREFIX compa:   <http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/>
+		PREFIX comp:	<http://www.theworldavatar.com/ontology/ts_backup/gas_network_components.owl#>
+		PREFIX compa:   <http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/>
 		PREFIX om:	  <http://www.ontology-of-units-of-measure.org/resource/om-2/>
 
 		INSERT DATA

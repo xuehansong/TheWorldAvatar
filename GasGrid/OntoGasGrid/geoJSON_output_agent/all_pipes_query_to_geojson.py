@@ -21,10 +21,10 @@ BATCH_SIZE = 50_000
 QUERY = """PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ns1:     <http://www.theworldavatar.com/ontology/ontocape/upper_level/system.owl#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX gasgrid: <http://www.theworldavatar.com/ontology/ontogasgrid/gas_network_system.owl#>
+PREFIX gasgrid: <http://www.theworldavatar.com/ontology/ts_backup/gas_network_system.owl#>
 PREFIX loc:     <http://www.bigdata.com/rdf/geospatial/literals/v1#>
 PREFIX geo:     <http://www.bigdata.com/rdf/geospatial#>
-PREFIX comp:	<http://www.theworldavatar.com/ontology/ontogasgrid/gas_network_components.owl#>
+PREFIX comp:	<http://www.theworldavatar.com/ontology/ts_backup/gas_network_components.owl#>
 
 SELECT ?location ?order ?label
 WHERE
@@ -47,7 +47,7 @@ def initialiseGateway():
 
 	jpsBaseLibView = jpsBaseLibGW.createModuleView()
 	jpsBaseLibGW.importPackages(jpsBaseLibView, "uk.ac.cam.cares.jps.base.query.*")
-	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ontogasgrid"))
+	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ts_backup"))
 
 
 def getKGLocation(namespace):
@@ -76,7 +76,7 @@ def outputPipes():
 		to a GeoJSON file.
 	"""
 	kgClient = initialiseGateway()
-	print("Using KG endpoint:", getKGLocation("ontogasgrid"))
+	print("Using KG endpoint:", getKGLocation("ts_backup"))
 	
 
 	gotAllResults = False

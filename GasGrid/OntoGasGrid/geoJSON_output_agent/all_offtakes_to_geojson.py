@@ -18,10 +18,10 @@ OUTPUT_FOLDER = "/var/www/html/gas-grid"
 QUERY = """PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 	PREFIX ns1:     <http://www.theworldavatar.com/ontology/ontocape/upper_level/system.owl#>
 	PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-	PREFIX gasgrid: <http://www.theworldavatar.com/ontology/ontogasgrid/gas_network_system.owl#>
+	PREFIX gasgrid: <http://www.theworldavatar.com/ontology/ts_backup/gas_network_system.owl#>
 	PREFIX loc:     <http://www.bigdata.com/rdf/geospatial/literals/v1#>
 	PREFIX geo:     <http://www.bigdata.com/rdf/geospatial#>
-	PREFIX comp:	<http://www.theworldavatar.com/ontology/ontogasgrid/gas_network_components.owl#>
+	PREFIX comp:	<http://www.theworldavatar.com/ontology/ts_backup/gas_network_components.owl#>
 
 	SELECT ?location ?label ?type ?zone ?area ?ntszone ?pipe 
 	WHERE
@@ -45,7 +45,7 @@ def initialiseGateway():
 
 	jpsBaseLibView = jpsBaseLibGW.createModuleView()
 	jpsBaseLibGW.importPackages(jpsBaseLibView, "uk.ac.cam.cares.jps.base.query.*")
-	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ontogasgrid"))
+	return jpsBaseLibView.RemoteStoreClient(getKGLocation("ts_backup"))
 
 		
 def getKGLocation(namespace):
@@ -72,7 +72,7 @@ def outputOfftakes():
 
 	# Initialise the JPS gateway
 	kgClient = initialiseGateway()
-	print("INFO: Using KG endpoint at", getKGLocation("ontogasgrid"))
+	print("INFO: Using KG endpoint at", getKGLocation("ts_backup"))
 
 	# start of geoJSON file 
 	geojson_file = """
@@ -104,7 +104,7 @@ def outputOfftakes():
 		ret = pd.DataFrame(ret_array,columns=header).values
 		
 
-		# <http://www.theworldavatar.com/kb/ontogasgrid/offtakes_abox/Langholm>
+		# <http://www.theworldavatar.com/kb/ts_backup/offtakes_abox/Langholm>
 
 		for i in range(num_ret):
 			if len(ret[i,0]) > 1:
