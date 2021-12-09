@@ -123,7 +123,7 @@ public class ThingsBoardAPIConnector {
         return token;
     }
     /**
-     * Retrieves an access token from the AQMesh API
+     * Retrieves an access token from the ThingsBoard API
      * @return The access token as string
      */
     private String getAccessToken() throws IOException {
