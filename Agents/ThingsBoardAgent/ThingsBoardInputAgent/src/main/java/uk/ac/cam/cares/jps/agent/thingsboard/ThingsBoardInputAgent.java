@@ -169,12 +169,11 @@ public class ThingsBoardInputAgent {
 
     /**
      * Updates the database with new readings.
-     * @param ElectricalReadings The electrical readings received from the ThingsBoard API
-     * @param TemperatureAndHumidityReadings The temperature and humidity readings received from the ThingsBoard API
+     * @param ElectricalTemperatureHumidityReadings The readings received from the ThingsBoard API
      */
     public void updateData(JSONObject ElectricalTemperatureHumidityReadings)throws IllegalArgumentException {
         // Transform readings in hashmap containing a list of objects for each JSON key,
-        // will be empty if the JSON Array is empty
+        // will be empty if the JSON Object is empty
     	Map<String, List<?>> timeStampReadingsMap = jsonObjectToMapForTimeStamp(ElectricalTemperatureHumidityReadings);
     	Map<String, List<?>> electricalTemperatureHumidityReadingsMap = jsonObjectToMap(ElectricalTemperatureHumidityReadings);
         
@@ -215,13 +214,9 @@ public class ThingsBoardInputAgent {
     }
 
     /**
-     * Transform a JSON Object into a Map, where values per key are gathered into a list.
-     * The JSON Object has multiple keys with each key having a JSON array as its value,
-     * each JSON array has multiple JSON objects,
-     * each JSON Object has 2 keys and value pairs,
-     * The 2 keys are ts and value respectively.
+     * Transform a JSON Object into a Map, where values per key are gathered into a list. For this method, the key is "ts" and the values are timestamps.
      * @param readings The JSON Object to convert
-     * @return The timestamps in form of a Map
+     * @return The timestamps(in date time format) in form of a Map
      * @throws JSONException if some keys are not found or the value is not a JSONArray
      */
     public Map<String, List<?>> jsonObjectToMapForTimeStamp(JSONObject readings) {
@@ -240,13 +235,10 @@ public class ThingsBoardInputAgent {
                 //Go through the JSON objects in the array one by one
                 //JSON objects are arranged with latest ts and value at the top
                 for (int j = tsAndValue.length() - 1; j >= 0; j--) {
-                // Get the value and add it to the corresponding list
+                // Get the timestamp and add it to the corresponding list
                 	JSONObject timeSeriesEntry = tsAndValue.getJSONObject(j);
                 	long timestamp = timeSeriesEntry.getLong("ts");
                 	//convert unix timestamp in milliseconds to date time format
-                	//.ofEpochMilli can only be applied on long variables, 
-                	//Long.valueOf(<>.toString()) converts the object to string and the string to long.
-                	//long timestamp = Long.valueOf(ts.toString());
                 	
                 	Date date = new java.util.Date(timestamp);
                 	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -302,10 +294,8 @@ public class ThingsBoardInputAgent {
     
     /**
      * Transform a JSON Object into a Map, where values per key are gathered into a list.
-     * The JSON Object has multiple keys with each key having a JSON array as its value,
-     * each JSON array has multiple JSON objects,
-     * each JSON Object has 2 keys and value pairs,
-     * The 2 keys are ts and value respectively.
+     * The JSON Object has key-value pairs where the keys are Current, Voltage, Power etc and the values are JSON Arrays.
+     * Each JSON Array consist of multiple JSON Objects. Each JSON Objects consist of two key-value pairs with the keys being ts and value.
      * @param readings The JSON Object to convert
      * @return The readings in form of a Map
      */
@@ -324,7 +314,8 @@ public class ThingsBoardInputAgent {
                 for (int j = tsAndValue.length() - 1; j >= 0; j--) {
                 // Get the value and add it to the corresponding list
                 	JSONObject timeSeriesEntry = tsAndValue.getJSONObject(j);
-                	Object value = timeSeriesEntry.get("value");
+                //The values are of string type in the JSON Object, convert them to double
+                	Object value = Double.valueOf(timeSeriesEntry.get("value").toString());
                 // Handle cases where the API returned null
                 if (value == JSONObject.NULL) {
                     // Handling depends on the datatype of the current key
@@ -375,9 +366,8 @@ public class ThingsBoardInputAgent {
 
     /**
      * Converts the readings in form of maps to time series' using the mappings from JSON key to IRI.
-     * @param ElectricalReadings The electrical readings as map.
-     * @param AmbientReadings The ambient readings as map.
-     * @param MeterTempReadings The meterTemp readings as map. 
+     * @param ElectricalTemperatureHumidityReadings The readings as map.
+     * @param TimestampReadings The timestamps as map.
      * @return A list of time series objects (one per mapping) that can be used with the time series client.
      */
     private List<TimeSeries<OffsetDateTime>> convertReadingsToTimeSeries(Map<String, List<?>> ElectricalTemperatureHumidityReadings,
@@ -478,7 +468,7 @@ public class ThingsBoardInputAgent {
             return Double.class;
         }
         // Environment conditions are floating point measures
-        else if (jsonKey.contains("Temperature") || jsonKey.contains("Humidity") || jsonKey.contains("IntTemp")) {
+        else if (jsonKey.contains("Temp") || jsonKey.contains("Humidity") || jsonKey.contains("IntTemp")) {
             return Double.class;
         }
         // The default datatype is string
