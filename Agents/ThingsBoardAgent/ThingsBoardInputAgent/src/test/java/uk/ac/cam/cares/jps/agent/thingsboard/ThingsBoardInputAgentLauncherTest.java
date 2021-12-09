@@ -156,35 +156,6 @@ public class ThingsBoardInputAgentLauncherTest {
         }
     }
 
-   /* @Test
-    public void testReadingEmpty() throws IOException {
-        createProperClientPropertiesFile();
-        createProperAPIPropertiesFile();
-        // Create dummy readings to return
-        JSONObject allReadings = new JSONObject("{}");
-       // gasReadings.put(new JSONObject("{'data' : 1}"));
-        // Use a mock for the input agent
-        try(MockedConstruction<ThingsBoardInputAgent> mockAgent = Mockito.mockConstruction(ThingsBoardInputAgent.class)) {
-            // Use a mock for the connector that returns the dummy readings
-            try(MockedConstruction<ThingsBoardAPIConnector> ignored = Mockito.mockConstruction(ThingsBoardAPIConnector.class,
-                    (mock, context) -> {
-                        Mockito.when(mock.getAllReadings()).thenReturn(allReadings);
-                    })) {
-                try {
-                    ThingsBoardInputAgentLauncher.main(args);
-                    Assert.fail();
-                }
-                catch (JPSRuntimeException e) {
-                    // Ensure that the update of the agent was never invoked
-                    Mockito.verify(mockAgent.constructed().get(0), Mockito.never()).updateData(Mockito.any());
-                    Assert.assertEquals("One of the readings (gas or particle) is empty, that means there is " +
-                            "a mismatch in the pointer for each readings. This should be fixed (and might require a clean up of the database)!",
-                            e.getMessage());
-                }
-            }
-        }
-    }*/
-
     private void createProperAgentPropertiesFile() throws IOException {
         // Create a properties file that points to the example/test mapping folder in the resources //
         // Create mappings folder
