@@ -41,12 +41,12 @@ public class ThingsBoardAPIConnector {
      * initialStartTs is the first starting Timestamp during initial request. 
      * 
      */
-	//private final long initialStartTs = initialEndTs - 300000;
+	
 	final static long INITIAlSTARTTS = 1;
     /**
      * initialEndTs is the first ending Timestamp during initial request
      */
-    //private final long initialEndTs = System.currentTimeMillis();
+    
     final static long INITIALENDTS = System.currentTimeMillis();
    
 
@@ -70,20 +70,11 @@ public class ThingsBoardAPIConnector {
      */
     private static final String CONNECTION_ERROR_MSG = "Unable to connect to ThingsBoard API!";
     private static final String READINGS_ERROR_MSG ="Fridge electrical readings, Temperature and Humidity readings could not be retrieved";
-    static final String ELECTRICAL_TEMPERATURE_HUMIDITY = "Current,Voltage,Power,Energy,PF,Temp,Humidity,IntTemp";
+    
     /**
-     * Enum class for allowed reading types
+     * Readings to be retrieved from ThingsBoard
      */
-    //TODO remove this portion after testing
-   /* private enum ReadingType {
-        ELECTRICAL_TEMPERATURE_HUMIDITY("Current,Voltage,Power,Energy,Temperature,Humidity,IntTemp");
-
-        public final String param;
-
-        ReadingType(String param) {
-            this.param = param;
-        }
-    }*/
+    static final String ELECTRICAL_TEMPERATURE_HUMIDITY = "Current,Voltage,Power,Energy,PF,Temp,Humidity,IntTemp";
 
     /**
      * Standard constructor
@@ -116,7 +107,7 @@ public class ThingsBoardAPIConnector {
             token = getAccessToken();
             String status = checkStatus();
             if (token!= null) {
-            LOGGER.info("Token successfully obtained. Is server receiving readings from device?" + status + "Token will be valid for 150 minutes.");
+            LOGGER.info("Token successfully obtained. Is server receiving readings from device? " + status + " Token will be valid for 150 minutes.");
             }
         } catch (IOException e) {
             LOGGER.error(CONNECTION_ERROR_MSG, e);
@@ -161,8 +152,7 @@ public class ThingsBoardAPIConnector {
 
     /**
      * Method to test whether the API is accessible after the token was set
-     * @return 
-     * @return 
+     * @return server status
      */
     public String checkStatus() throws IOException {
     	boolean status = false;
@@ -183,7 +173,7 @@ public class ThingsBoardAPIConnector {
                     }
                     else {
             	JSONArray checkAttributes = new JSONArray (EntityUtils.toString(response.getEntity()));
-            	
+            	//navigate through the JSONObject to retrieve the status value, the status will either be true or false
                 for (int j = 0; j < checkAttributes.length(); j++) {
             	JSONObject attributes = checkAttributes.getJSONObject(j);
             	if 
@@ -224,7 +214,7 @@ public class ThingsBoardAPIConnector {
     /**
      * Retrieves the latest readings from the ThingsBoard API
      * @param readingType Specifies the type of readings (ELECTRICAL, TEMPERATURE, HUMIDITY)
-     * @return Readings in a JSON Array with a JSON object for each measurement time
+     * @return Readings in a JSON Object with multiple key-value pairs
      */
     private JSONObject retrieveReadings(String readingType) throws IOException, JSONException {
 
@@ -254,24 +244,12 @@ public class ThingsBoardAPIConnector {
         }
     }
     
+   
     /**
-     * Set initial request's ending timestamp to equal to initialEndTs and
-     * set subsequent requests ending timestamps to equal to current time when the request is sent
-     * @return endTs as the ending timestamp for the request
+     * Set initial request's starting timestamp to equal to initialStartTs and
+     * set subsequent requests starting timestamps to equal to ending timestamps of the previous request
+     * @return startTs as the starting timestamp for the request
      */
-    /*public long setEndTs() {
-    	
-    	if (INITIALENDTS > previousEndTs) {
-    		endTs = INITIALENDTS;
-    		
-    	}
-    	else {
-    		endTs = System.currentTimeMillis();
-    		
-    	}
-    	return endTs;
-    }
-    */
     public long setStartTs() {
     	if (INITIAlSTARTTS > previousEndTs) {
     		startTs = INITIAlSTARTTS;
@@ -284,7 +262,11 @@ public class ThingsBoardAPIConnector {
 		return startTs;	
     }
     
-
+    /**
+     * Set initial request's ending timestamp to equal to initialEndTs and
+     * set subsequent requests ending timestamps to equal to current time when the request is sent
+     * @return endTs as the ending timestamp for the request
+     */
     public long setEndTs() {
     	
     	if (startTs == INITIAlSTARTTS) {
@@ -296,26 +278,7 @@ public class ThingsBoardAPIConnector {
     	previousEndTs = endTs;
     	return endTs;
     }
-    /**
-     * Set initial request's starting timestamp to equal to initialStartTs and
-     * set subsequent requests starting timestamps to equal to ending timestamps of the previous request
-     * @return startTs as the starting timestamp for the request
-     */
    
-    /*public long setStartTs() {
-    	if (endTs == INITIALENDTS) {
-    		startTs = INITIAlSTARTTS;
-    	}
-    	else {
-    		//startTs of subsequent requests is set to the previous request's endTs + 1.6 seconds
-    		//time interval between each reading is observed to be around 1600 milliseconds
-    		startTs = previousEndTs;
-    	}
-    	previousEndTs = endTs;
-    	return startTs;
-		
-    }
-    */
    
     /**
      * Reads the username, password, auth_url, api_url and device_token needed to connect to the API from a properties file and saves it in fields.
