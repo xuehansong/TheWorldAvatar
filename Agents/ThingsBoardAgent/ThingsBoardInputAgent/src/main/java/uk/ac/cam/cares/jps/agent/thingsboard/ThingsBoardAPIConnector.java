@@ -70,7 +70,7 @@ public class ThingsBoardAPIConnector {
      */
     private static final String CONNECTION_ERROR_MSG = "Unable to connect to ThingsBoard API!";
     private static final String READINGS_ERROR_MSG ="Fridge electrical readings, Temperature and Humidity readings could not be retrieved";
-    static final String ELECTRICAL_TEMPERATURE_HUMIDITY = "Current,Voltage,Power,Energy,PF,Temperature,Humidity,IntTemp";
+    static final String ELECTRICAL_TEMPERATURE_HUMIDITY = "Current,Voltage,Power,Energy,PF,Temp,Humidity,IntTemp";
     /**
      * Enum class for allowed reading types
      */
