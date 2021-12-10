@@ -44,7 +44,7 @@ public class ThingsBoardAPIConnectorTest {
   
     @Before
     public void initializeTestConnector() {
-        testConnector = new ThingsBoardAPIConnector("username", "password", PATH_URL, "device_token");
+        testConnector = new ThingsBoardAPIConnector("username", "password", PATH_URL, "device_token", "keys");
     
     }
 
@@ -56,14 +56,14 @@ public class ThingsBoardAPIConnectorTest {
 
     @Test
     public void ThingsBoardAPIConnectorConstructorTest() throws NoSuchFieldException, IllegalAccessException, IOException {
-        // One connector constructed using the username, password, auth_url, api_url and device token directly
-        ThingsBoardAPIConnector connector = new ThingsBoardAPIConnector("username", "password", "path_url", "device_token");
+        // One connector constructed using the username, password, auth_url, api_url, device token and keys directly
+        ThingsBoardAPIConnector connector = new ThingsBoardAPIConnector("username", "password", "path_url", "device_token", "keys");
         // One connector constructed using a properties file
         String propertiesFile = Paths.get(folder.getRoot().toString(), "api.properties").toString();
-        writePropertyFile(propertiesFile, Arrays.asList("thingsboard.username=username", "thingsboard.password=password", "path.url=path_url", "device.token=device_token"));
+        writePropertyFile(propertiesFile, Arrays.asList("thingsboard.username=username", "thingsboard.password=password", "path.url=path_url", "device.token=device_token", "keys=keys"));
         ThingsBoardAPIConnector connectorFile = new ThingsBoardAPIConnector(propertiesFile);
 
-        // Retrieve private fields for username and password and check that they were set correctly
+        // Retrieve private fields and check that they were set correctly
         Field usernameField = ThingsBoardAPIConnector.class.getDeclaredField("username");
         usernameField.setAccessible(true);
         Assert.assertEquals("username", usernameField.get(connector));
@@ -84,6 +84,11 @@ public class ThingsBoardAPIConnectorTest {
         Assert.assertEquals("device_token", deviceTokenField.get(connector));
         Assert.assertEquals("device_token", deviceTokenField.get(connectorFile));
         
+        Field keysField = ThingsBoardAPIConnector.class.getDeclaredField("keys");
+        keysField.setAccessible(true);
+        Assert.assertEquals("keys", keysField.get(connector));
+        Assert.assertEquals("keys", keysField.get(connectorFile));
+        
     }
 
     @Test
@@ -96,6 +101,7 @@ public class ThingsBoardAPIConnectorTest {
         String noPassword = "Properties file is missing \"thingsboard.password=<thingsboard_password>\"";
         String noPathURL = "Properties file is missing \"path.url=<path_url>\"";
         String noDeviceToken = "Properties file is missing \"device.token=<device_token>\"";
+        String noKeys = "Properties file is missing \"keys=<keys>\"";
 
         // Set private method to be accessible
         Method loadAPIConfig = ThingsBoardAPIConnector.class.getDeclaredMethod("loadAPIConfigs", String.class);
@@ -152,9 +158,19 @@ public class ThingsBoardAPIConnectorTest {
             Assert.assertEquals(IOException.class, e.getCause().getClass());
             Assert.assertEquals(noDeviceToken, e.getCause().getMessage());
         }
+        
+        writePropertyFile(filepath, Arrays.asList("thingsboard.username=test_user", "thingsboard.password=test_password", "path.url=path_url", "device.token=device_token"));
+        // Try loading RDB configs
+        try {
+            loadAPIConfig.invoke(testConnector, filepath);
+            Assert.fail();
+        } catch (InvocationTargetException e) {
+            Assert.assertEquals(IOException.class, e.getCause().getClass());
+            Assert.assertEquals(noKeys, e.getCause().getMessage());
+        }
 
         // Test for proper username and password
-        writePropertyFile(filepath, Arrays.asList("thingsboard.username=test_user", "thingsboard.password=test_password", "path.url=path_url", "device.token=device_token"));
+        writePropertyFile(filepath, Arrays.asList("thingsboard.username=test_user", "thingsboard.password=test_password", "path.url=path_url", "device.token=device_token", "keys=keys01,keys02,keys03"));
         // Try loading RDB configs
         try {
             loadAPIConfig.invoke(testConnector, filepath);
@@ -179,6 +195,11 @@ public class ThingsBoardAPIConnectorTest {
         deviceTokenField.setAccessible(true);
         // Correct value depends on what is set in the @Before initialization method
         Assert.assertEquals("device_token", deviceTokenField.get(testConnector));
+        
+        Field keysField = ThingsBoardAPIConnector.class.getDeclaredField("keys");
+        keysField.setAccessible(true);
+        // Correct value depends on what is set in the @Before initialization method
+        Assert.assertEquals("keys01,keys02,keys03", keysField.get(testConnector));
 
     }
 
@@ -319,8 +340,7 @@ public class ThingsBoardAPIConnectorTest {
         deviceTokenField.set(testConnector, device_token);  
         // API gives an error when retrieving the data
         try {
-            testConnector.getAllReadings(); //This mock request represents the initial request with startTs = INITIALSTARTTS
-                                      //And endTs = INITIALENDTS
+            testConnector.getAllReadings(); 
             Assert.fail();
         }
         catch (JPSRuntimeException e) {
@@ -339,6 +359,11 @@ public class ThingsBoardAPIConnectorTest {
             Field deviceTokenField = ThingsBoardAPIConnector.class.getDeclaredField("device_token");
             deviceTokenField.setAccessible(true);
             deviceTokenField.set(testConnector, device_token); 
+            
+            String keys = "keys01,keys02,keys03";
+            Field keysField = ThingsBoardAPIConnector.class.getDeclaredField("keys");
+            keysField.setAccessible(true);
+            keysField.set(testConnector, keys);
             JSONObject readings = new JSONObject();
             JSONObject values_01 = new JSONObject();
             values_01.put("ts","7891011" );
@@ -350,12 +375,9 @@ public class ThingsBoardAPIConnectorTest {
             values.put(values_01);
             values.put(values_02);
             readings.put("Current", values);
-        //line 334 sets the startTs and endTs to the subsequent values after the initial request.
-            thingsBoardAPIMock.stubFor(get(urlEqualTo("/" + "api/plugins/telemetry/DEVICE/" + device_token + "/values/timeseries?keys=" + ThingsBoardAPIConnector.ELECTRICAL_TEMPERATURE_HUMIDITY
+            thingsBoardAPIMock.stubFor(get(urlEqualTo("/" + "api/plugins/telemetry/DEVICE/" + device_token + "/values/timeseries?keys=" + keys
         		+ "&startTs="+ThingsBoardAPIConnector.INITIAlSTARTTS + "&endTs="+ThingsBoardAPIConnector.INITIALENDTS + "&limit=3600&agg=NONE"))
                 .willReturn(ok().withBody(readings.toString())));
-        //line 338 runs setStartTs() and setEndTs() again thus setting the startTs t and endTs to new values. 
-        //This means that the URL will never equal to each other.
         Assert.assertEquals(readings.toString(), testConnector.getAllReadings().toString());
     } 
         
