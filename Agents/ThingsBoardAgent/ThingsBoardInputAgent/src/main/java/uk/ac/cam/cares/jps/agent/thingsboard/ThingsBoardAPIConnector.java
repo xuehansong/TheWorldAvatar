@@ -72,9 +72,9 @@ public class ThingsBoardAPIConnector {
     private static final String READINGS_ERROR_MSG ="Fridge electrical readings, Temperature and Humidity readings could not be retrieved";
     
     /**
-     * Readings to be retrieved from ThingsBoard
+     * Keys to be retrieved from ThingsBoard
      */
-    static final String ELECTRICAL_TEMPERATURE_HUMIDITY = "Current,Voltage,Power,Energy,PF,Temp,Humidity,IntTemp";
+    private String keys;
 
     /**
      * Standard constructor
@@ -83,11 +83,14 @@ public class ThingsBoardAPIConnector {
      * @param path_url the port that is hosting the ThingsBoard server
      * @param device_token the token required to retrieve readings from a specific device
      */
-    public ThingsBoardAPIConnector(String username, String password, String path_url, String device_token) {
+    public ThingsBoardAPIConnector(String username, String password, String path_url, String device_token, String keys) {
         this.username = username;
         this.password = password;
         this.path_url = path_url;
         this.device_token = device_token;
+        this.keys = keys;
+        
+        
     }
 
 
@@ -203,7 +206,7 @@ public class ThingsBoardAPIConnector {
      */
     public JSONObject getAllReadings() {
         try {
-            return retrieveReadings(ELECTRICAL_TEMPERATURE_HUMIDITY);
+            return retrieveReadings(keys);
         }
         catch (IOException | JSONException e) {
             LOGGER.error(READINGS_ERROR_MSG, e);
@@ -318,6 +321,11 @@ public class ThingsBoardAPIConnector {
                 this.device_token = prop.getProperty("device.token");
             } else {
                 throw new IOException("Properties file is missing \"device.token=<device_token>\"");
+            }
+            if (prop.containsKey("keys")) {
+                this.keys = prop.getProperty("keys");
+            } else {
+                throw new IOException("Properties file is missing \"keys=<keys>\"");
             }
         }
 }
