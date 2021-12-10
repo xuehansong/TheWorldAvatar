@@ -275,14 +275,8 @@ public class ThingsBoardInputAgent {
             List<?> valuesTyped;
             // Use mapping to cast the values into integer, double, boolean or string
             // The Number cast is required for org.json datatypes
-            if (datatype.equals(Integer.class.getSimpleName())) {
-                valuesTyped = valuesUntyped.stream().map(value -> ((Number) value).intValue()).collect(Collectors.toList());
-            }
-            else if (datatype.equals(Double.class.getSimpleName())) {
+            if (datatype.equals(Double.class.getSimpleName())) {
                 valuesTyped = valuesUntyped.stream().map(value -> ((Number) value).doubleValue()).collect(Collectors.toList());
-            }
-            else if (datatype.equals(Boolean.class.getSimpleName())) {
-                valuesTyped = valuesUntyped.stream().map(value -> ((Boolean) value)).collect(Collectors.toList());
             }
             else {
                 valuesTyped = valuesUntyped.stream().map(Object::toString).collect(Collectors.toList());
@@ -347,14 +341,8 @@ public class ThingsBoardInputAgent {
             List<?> valuesTyped;
             // Use mapping to cast the values into integer, double, boolean or string
             // The Number cast is required for org.json datatypes
-            if (datatype.equals(Integer.class.getSimpleName())) {
-                valuesTyped = valuesUntyped.stream().map(value -> ((Number) value).intValue()).collect(Collectors.toList());
-            }
-            else if (datatype.equals(Double.class.getSimpleName())) {
+            if (datatype.equals(Double.class.getSimpleName())) {
                 valuesTyped = valuesUntyped.stream().map(value -> ((Number) value).doubleValue()).collect(Collectors.toList());
-            }
-            else if (datatype.equals(Boolean.class.getSimpleName())) {
-                valuesTyped = valuesUntyped.stream().map(value -> ((Boolean) value)).collect(Collectors.toList());
             }
             else {
                 valuesTyped = valuesUntyped.stream().map(Object::toString).collect(Collectors.toList());
@@ -459,22 +447,20 @@ public class ThingsBoardInputAgent {
     }
 
     /**
-     * Returns the class (datatype) corresponding to a JSON key. Note: rules for the mapping are hardcoded in the method.
+     * Returns the class (datatype) corresponding to a JSON key.
      * @param jsonKey The JSON key as string.
      * @return The corresponding class as Class<?> object.
      */
     private Class<?> getClassFromJSONKey(String jsonKey) {
-       if (jsonKey.contains("Voltage") || jsonKey.contains("Current") || jsonKey.contains("Energy") || jsonKey.contains("Power")|| jsonKey.contains("PF")) {
-            return Double.class;
-        }
-        // Environment conditions are floating point measures
-        else if (jsonKey.contains("Temp") || jsonKey.contains("Humidity") || jsonKey.contains("IntTemp")) {
-            return Double.class;
-        }
-        // The default datatype is string
+        if (jsonKey.contains(timestampKey))
+        	//The timestamp has been converted from unix timestamp in milliseconds to date time format
+        	//As such it should be a String
+        	return String.class;
         else {
-            return String.class;
+        	//Default is Double since ThingsBoard main purpose is to store measurements from sensors
+        	//As such there should not be any readings stored in ThingsBoard that is considered to be boolean, String or integer
+        	return Double.class;
         }
     }
-
 }
+
