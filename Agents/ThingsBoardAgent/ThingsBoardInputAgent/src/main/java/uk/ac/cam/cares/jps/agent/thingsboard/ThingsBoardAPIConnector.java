@@ -28,7 +28,7 @@ public class ThingsBoardAPIConnector {
     private String username;
     private String password;
     private String path_url;
-    private String device_token;
+    private String device_id;
     
     /**
      * Variables for retrieving historical timeseries data from ThingsBoard
@@ -83,11 +83,11 @@ public class ThingsBoardAPIConnector {
      * @param path_url the port that is hosting the ThingsBoard server
      * @param device_token the token required to retrieve readings from a specific device
      */
-    public ThingsBoardAPIConnector(String username, String password, String path_url, String device_token, String keys) {
+    public ThingsBoardAPIConnector(String username, String password, String path_url, String device_id, String keys) {
         this.username = username;
         this.password = password;
         this.path_url = path_url;
-        this.device_token = device_token;
+        this.device_id = device_id;
         this.keys = keys;
         
         
@@ -166,7 +166,7 @@ public class ThingsBoardAPIConnector {
         }
 
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            HttpGet attributesRequest = new HttpGet(path_url + "/api/plugins/telemetry/DEVICE/" + device_token + "/values/attributes");
+            HttpGet attributesRequest = new HttpGet(path_url + "/api/plugins/telemetry/DEVICE/" + device_id + "/values/attributes");
             setTokenAuthorization(attributesRequest);
 
             try (CloseableHttpResponse response = httpclient.execute(attributesRequest)) { 
@@ -185,7 +185,7 @@ public class ThingsBoardAPIConnector {
             	}
             	}
             	}
-                serverStatus = "is server status active: "+status;
+                serverStatus = "is server status active: "+ status;
         }   
         }
 		return serverStatus;
@@ -222,7 +222,7 @@ public class ThingsBoardAPIConnector {
     private JSONObject retrieveReadings(String readingType) throws IOException, JSONException {
 
         
-    	String basicReadingPath = String.join("/",path_url, "api/plugins/telemetry/DEVICE", device_token, "values/timeseries?keys");
+    	String basicReadingPath = String.join("/",path_url, "api/plugins/telemetry/DEVICE", device_id, "values/timeseries?keys");
         String latestReadingPath = String.join("=",basicReadingPath,  readingType  );
         
         startTs = setStartTs();
@@ -285,7 +285,7 @@ public class ThingsBoardAPIConnector {
    
     /**
      * Reads the username, password, auth_url, api_url and device_token needed to connect to the API from a properties file and saves it in fields.
-     * @param filepath Path to the properties file from which to read the username, password, auth_url, api_url and device_token
+     * @param filepath Path to the properties file from which to read the username, password, auth_url, api_url and device_id
      */
     private void loadAPIConfigs(String filepath) throws IOException {
         // Check whether properties file exists at specified location
@@ -317,10 +317,10 @@ public class ThingsBoardAPIConnector {
             } else {
                 throw new IOException("Properties file is missing \"path.url=<path_url>\"");
             }
-            if (prop.containsKey("device.token")) {
-                this.device_token = prop.getProperty("device.token");
+            if (prop.containsKey("device.id")) {
+                this.device_id = prop.getProperty("device.id");
             } else {
-                throw new IOException("Properties file is missing \"device.token=<device_token>\"");
+                throw new IOException("Properties file is missing \"device.id=<device_id>\"");
             }
             if (prop.containsKey("keys")) {
                 this.keys = prop.getProperty("keys");
