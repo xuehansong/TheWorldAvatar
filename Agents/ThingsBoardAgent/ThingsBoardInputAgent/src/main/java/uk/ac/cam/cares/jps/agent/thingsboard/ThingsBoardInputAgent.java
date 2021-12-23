@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.TimeZone;
+
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,9 +27,10 @@ import org.jooq.exception.DataAccessException;
 /**
  * Class to retrieve data from the ThingsBoard API and storing it with connection to The World Avatar (Knowledge Base).
  * @author  */
-public class ThingsBoardInputAgent {
+public class ThingsBoardInputAgent{
 
-    /**
+
+	/**
      * Logger for reporting info/errors.
      */
     private static final Logger LOGGER = LogManager.getLogger(ThingsBoardInputAgentLauncher.class);
@@ -242,7 +245,9 @@ public class ThingsBoardInputAgent {
                 	
                 	Date date = new java.util.Date(timestamp);
                 	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                	sdf.setTimeZone(TimeZone.getDefault());
                 	Object ts = sdf.format(date);
+                	
                 	
                 // Handle cases where the API returned null
                 if (ts == JSONObject.NULL) {
@@ -308,21 +313,29 @@ public class ThingsBoardInputAgent {
                 for (int j = tsAndValue.length() - 1; j >= 0; j--) {
                 // Get the value and add it to the corresponding list
                 	JSONObject timeSeriesEntry = tsAndValue.getJSONObject(j);
+                	Object value = timeSeriesEntry.get("value");
                 //The values are of string type in the JSON Object, convert them to double
-                	Object value = Double.valueOf(timeSeriesEntry.get("value").toString());
-                // Handle cases where the API returned null
-                if (value == JSONObject.NULL) {
+                	/*if (value == JSONObject.NULL || value.toString() == "NAN") {
                     // Handling depends on the datatype of the current key
                     String datatype = getClassFromJSONKey(key).getSimpleName();
                     // If it is a number use NaN (not a number)
-                    if (datatype.equals(Integer.class.getSimpleName()) | datatype.equals(Double.class.getSimpleName())) {
+                    if (datatype.equals(Double.class.getSimpleName())) {
                         value = Double.NaN;
                     }
                     // Otherwise, use the string NA (not available)
                     else {
                         value = "NA";
                     }
-                }
+                }*/
+                	try {
+                    	value = Double.valueOf(timeSeriesEntry.get("value").toString());
+                    	}
+                	catch (NumberFormatException e) {
+                		value = Double.NaN;
+                	}
+                	catch (NullPointerException e) {
+                		value = "NA";
+                	}
                 // If the key is not present yet initialize the list
                 if (!readingsMap.containsKey(key)) {
                     readingsMap.put(key, new ArrayList<>());
@@ -443,6 +456,7 @@ public class ThingsBoardInputAgent {
                 newValues.add(new ArrayList<>());
             }
         }
+        LOGGER.info("The timeseries will be added after the threshold " + timeThreshold);
         return new TimeSeries<>(newTimes, timeSeries.getDataIRIs(), newValues);
     }
 
