@@ -45,7 +45,7 @@ public class ThingsBoardInputAgentLauncherTest {
     public void testMainNoArgs() {
         String[] args = {};
         try {
-            ThingsBoardInputAgentLauncher.main(args);
+            ThingsBoardInputAgentLauncher.initializeAgent(args);
             Assert.fail();
         }
         catch (JPSRuntimeException e) {
@@ -58,7 +58,7 @@ public class ThingsBoardInputAgentLauncherTest {
     public void testMainInvalidAgentPropertyFile() {
         // Empty agent properties file should result in an error
         try {
-            ThingsBoardInputAgentLauncher.main(args);
+            ThingsBoardInputAgentLauncher.initializeAgent(args);
             Assert.fail();
         }
         catch (JPSRuntimeException e) {
@@ -71,7 +71,7 @@ public class ThingsBoardInputAgentLauncherTest {
         createProperAgentPropertiesFile();
         // Empty properties file for time series client should result in exception
         try {
-            ThingsBoardInputAgentLauncher.main(args);
+            ThingsBoardInputAgentLauncher.initializeAgent(args);
             Assert.fail();
         }
         catch (JPSRuntimeException e) {
@@ -87,7 +87,7 @@ public class ThingsBoardInputAgentLauncherTest {
         try(MockedConstruction<ThingsBoardInputAgent> mockAgent = Mockito.mockConstruction(ThingsBoardInputAgent.class)) {
             // Empty API properties file should result in an exception
             try {
-                ThingsBoardInputAgentLauncher.main(args);
+                ThingsBoardInputAgentLauncher.initializeAgent(args);
                 Assert.fail();
             }
             catch (JPSRuntimeException e) {
@@ -111,7 +111,7 @@ public class ThingsBoardInputAgentLauncherTest {
             try(MockedConstruction<ThingsBoardAPIConnector> mockConnector = Mockito.mockConstruction(ThingsBoardAPIConnector.class,
                     (mock, context) -> Mockito.when(mock.getAllReadings()).thenThrow(new JPSRuntimeException("exception")))) {
                 try {
-                    ThingsBoardInputAgentLauncher.main(args);
+                    ThingsBoardInputAgentLauncher.initializeAgent(args);
                     Assert.fail();
                 }
                 catch (JPSRuntimeException e) {
@@ -149,7 +149,7 @@ public class ThingsBoardInputAgentLauncherTest {
                     (mock, context) -> {
                         Mockito.when(mock.getAllReadings()).thenReturn(readings);
                     })) {
-                ThingsBoardInputAgentLauncher.main(args);
+                ThingsBoardInputAgentLauncher.initializeAgent(args);
                 // Ensure that the update of the agent was invoked
                 Mockito.verify(mockAgent.constructed().get(0), Mockito.times(1)).updateData(readings);
             }
