@@ -36,22 +36,25 @@ public class ThingsBoardAPIConnector {
     private long startTs;
     private long endTs;
     
-    
+    /*
     /**
-     * initialStartTs is the first starting Timestamp during initial request. 
+     * StartTs is the first starting Timestamp during initial request. 
      * 
      */
 	
-	final static long INITIAlSTARTTS = 1;
+	final static long STARTTS = 1;
+	 
+	
     /**
-     * initialEndTs is the first ending Timestamp during initial request
+     * EndTs is the first ending Timestamp during initial request
      */
     
-    final static long INITIALENDTS = System.currentTimeMillis();
+    final static long ENDTS = System.currentTimeMillis();
    
 
-	public long previousEndTs = 0;
-        /**
+	//public long previousEndTs = 0;
+    
+     /**
      * Token needed for all API calls (except to retrieve token)
      */
     private String token = "";
@@ -225,8 +228,9 @@ public class ThingsBoardAPIConnector {
     	String basicReadingPath = String.join("/",path_url, "api/plugins/telemetry/DEVICE", device_id, "values/timeseries?keys");
         String latestReadingPath = String.join("=",basicReadingPath,  readingType  );
         
-        startTs = setStartTs();
-        endTs = setEndTs();        
+        startTs = 1;
+        endTs = ENDTS;        
+        LOGGER.info("The readings are retrieved from startTs= " + startTs +"to endTs=" + endTs);
         String historicalReadingPath = String.join("&", latestReadingPath, "startTs="+startTs, "endTs="+endTs, "limit=3600", "agg=NONE");
         
         
@@ -245,41 +249,6 @@ public class ThingsBoardAPIConnector {
                 }
             }
         }
-    }
-    
-   
-    /**
-     * Set initial request's starting timestamp to equal to initialStartTs and
-     * set subsequent requests starting timestamps to equal to ending timestamps of the previous request
-     * @return startTs as the starting timestamp for the request
-     */
-    public long setStartTs() {
-    	if (INITIAlSTARTTS > previousEndTs) {
-    		startTs = INITIAlSTARTTS;
-    	}
-    	else {
-    		//startTs of subsequent requests is set to the previous request's endTs + 1.6 seconds
-    		//time interval between each reading is observed to be around 1600 milliseconds
-    		startTs = previousEndTs;
-    	}
-		return startTs;	
-    }
-    
-    /**
-     * Set initial request's ending timestamp to equal to initialEndTs and
-     * set subsequent requests ending timestamps to equal to current time when the request is sent
-     * @return endTs as the ending timestamp for the request
-     */
-    public long setEndTs() {
-    	
-    	if (startTs == INITIAlSTARTTS) {
-    		endTs = INITIALENDTS;
-    	}
-    	else {
-    		endTs = System.currentTimeMillis();
-    	}
-    	previousEndTs = endTs;
-    	return endTs;
     }
    
    
