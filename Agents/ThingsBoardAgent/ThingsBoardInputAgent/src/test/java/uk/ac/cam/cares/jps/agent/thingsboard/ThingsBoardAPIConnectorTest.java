@@ -63,7 +63,7 @@ public class ThingsBoardAPIConnectorTest {
         writePropertyFile(propertiesFile, Arrays.asList("thingsboard.username=username", "thingsboard.password=password", "path.url=path_url", "device.id=device_id", "keys=keys"));
         ThingsBoardAPIConnector connectorFile = new ThingsBoardAPIConnector(propertiesFile);
 
-        // Retrieve private fields and check that they were set correctly
+        // Retrieve private fields for username and password and check that they were set correctly
         Field usernameField = ThingsBoardAPIConnector.class.getDeclaredField("username");
         usernameField.setAccessible(true);
         Assert.assertEquals("username", usernameField.get(connector));
@@ -375,36 +375,11 @@ public class ThingsBoardAPIConnectorTest {
             values.put(values_02);
             readings.put("Current", values);
             thingsBoardAPIMock.stubFor(get(urlEqualTo("/" + "api/plugins/telemetry/DEVICE/" + device_id + "/values/timeseries?keys=" + keys
-        		+ "&startTs="+ThingsBoardAPIConnector.INITIAlSTARTTS + "&endTs="+ThingsBoardAPIConnector.INITIALENDTS + "&limit=3600&agg=NONE"))
+        		+ "&startTs=1&endTs="+ ThingsBoardAPIConnector.ENDTS + "&limit=3600&agg=NONE"))
                 .willReturn(ok().withBody(readings.toString())));
         Assert.assertEquals(readings.toString(), testConnector.getAllReadings().toString());
     } 
         
-       
-        
-    @Test
-    public void testSetStartTsAndEndTs() throws NoSuchFieldException, IllegalAccessException {
-        // Set a token to avoid needing to invoke connect
-        Field tokenField = ThingsBoardAPIConnector.class.getDeclaredField("token");
-        tokenField.setAccessible(true);
-        tokenField.set(testConnector, TEST_TOKEN);
-
-        String device_id = "12345";
-        Field deviceIdField = ThingsBoardAPIConnector.class.getDeclaredField("device_id");
-        deviceIdField.setAccessible(true);
-        deviceIdField.set(testConnector, device_id);   
-        //1st request startTs and EndTs
-       Assert.assertEquals(1, testConnector.setStartTs());
-       Assert.assertEquals(ThingsBoardAPIConnector.INITIALENDTS, testConnector.setEndTs());
-       //2nd request startTs and EndTs
-       long Ts = 0;
-       Assert.assertEquals(ThingsBoardAPIConnector.INITIALENDTS, testConnector.setStartTs());
-       Assert.assertEquals(System.currentTimeMillis(), Ts = testConnector.setEndTs() );
-       //3rd request startTs and EndTs
-       Assert.assertEquals(Ts, testConnector.setStartTs());
-       Assert.assertEquals(System.currentTimeMillis(), testConnector.setEndTs() );
-    }
-
     private void setTokenAPIMock(ResponseDefinitionBuilder response) {
         // Expected request body
         JSONObject requestBody = new JSONObject();
