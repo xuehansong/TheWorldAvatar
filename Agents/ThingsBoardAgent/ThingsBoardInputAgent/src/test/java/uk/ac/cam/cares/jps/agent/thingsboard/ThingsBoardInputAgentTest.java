@@ -1,7 +1,6 @@
 package uk.ac.cam.cares.jps.agent.thingsboard;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -37,6 +36,7 @@ public class ThingsBoardInputAgentTest {
     private final List<String> iris = Arrays.asList("iri1", "iri2", "iri3", "iri4", "iri5", "iri6", "iri7", "iri8");
     // Default list of JSON keys
     private final String[] keys = {"Current", "Voltage" ,"Power", "Energy", "PF", "Temperature", "Humidity", "IntTemp"};
+    
     //Default list of timestamps
 
     // Readings used by several tests
@@ -64,7 +64,7 @@ public class ThingsBoardInputAgentTest {
         // Set the mocked time series client
         testAgent.setTsClient(mockTSClient);
     }
-
+   
     @Before
     public void createExampleReadings() {
 
@@ -119,10 +119,10 @@ public class ThingsBoardInputAgentTest {
             JSONObject intTempMeasures_02 = new JSONObject();
             JSONObject intTempMeasures_03 = new JSONObject();
             JSONObject intTempMeasures_04 = new JSONObject();
-            long ts_01 = 123456;
-            long ts_02 = 125056;
-            long ts_03 = 126656;
-            long ts_04 = 128256;
+            long ts_01 = 1234560000000L;
+            long ts_02 = 1250560000000L;
+            long ts_03 = 1266560000000L;
+            long ts_04 = 1282560000000L;
             
             voltageMeasures_01.put(ThingsBoardInputAgent.timestampKey, ts_01);
             voltageMeasures_01.put("value", 240.1);
@@ -349,6 +349,7 @@ public class ThingsBoardInputAgentTest {
         Assert.assertEquals(Double.class, getClassFromJSONKey.invoke(testAgent, "Humidity"));
         Assert.assertEquals(Double.class, getClassFromJSONKey.invoke(testAgent, "IntTemp"));
     }
+    
 
     @Test
     public void testTimeSeriesExistAllIRIsTrue() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -614,30 +615,31 @@ public class ThingsBoardInputAgentTest {
         Map<String, List<?>> readings = (Map<String, List<?>>) jsonObjectToMapForTimeStamp.invoke(testAgent, allReadings);
         // Check that all keys have a list of the same size as the nested JSON Array
         Assert.assertTrue(readings.containsKey(ThingsBoardInputAgent.timestampKey));
-        long ts_01 = 123456;
+        long ts_01 = 1234560000000L;
         Date date = new java.util.Date(ts_01);
     	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    	sdf.setTimeZone(TimeZone.getDefault());
     	Object ts01 = sdf.format(date);
-        long ts_02 = 125056;
+        long ts_02 = 1250560000000L;
         Date date02 = new java.util.Date(ts_02);
     	SimpleDateFormat sdf02 = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     	Object ts02 = sdf02.format(date02);
-        long ts_03 = 126656;
+        long ts_03 = 1266560000000L;
         Date date03 = new java.util.Date(ts_03);
     	SimpleDateFormat sdf03 = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     	Object ts03 = sdf03.format(date03);
-    	long ts_04 = 128256;
+    	long ts_04 = 1282560000000L;
         Date date04 = new java.util.Date(ts_04);
     	SimpleDateFormat sdf04 = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     	Object ts04 = sdf04.format(date04);
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts01));
-        Assert.assertEquals(ts01, readings.get(ThingsBoardInputAgent.timestampKey).get(0));
+        Assert.assertEquals("2009-02-14T05:20:00", readings.get(ThingsBoardInputAgent.timestampKey).get(0));
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts02));
-        Assert.assertEquals(ts02, readings.get(ThingsBoardInputAgent.timestampKey).get(1));
+        Assert.assertEquals("2009-08-18T09:46:40", readings.get(ThingsBoardInputAgent.timestampKey).get(1));
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts03));
-        Assert.assertEquals(ts03, readings.get(ThingsBoardInputAgent.timestampKey).get(2));
+        Assert.assertEquals("2010-02-19T14:13:20", readings.get(ThingsBoardInputAgent.timestampKey).get(2));
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts04));
-        Assert.assertEquals(ts04, readings.get(ThingsBoardInputAgent.timestampKey).get(3));
+        Assert.assertEquals("2010-08-23T18:40:00", readings.get(ThingsBoardInputAgent.timestampKey).get(3));
         Assert.assertEquals(allReadings.getJSONArray(keys[0]).length(), readings.get(ThingsBoardInputAgent.timestampKey).size());
     }
 
