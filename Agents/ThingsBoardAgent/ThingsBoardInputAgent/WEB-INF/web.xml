@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app 
-		xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" 
+		xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/ http://java.sun.com/xml/ns/javaee/web-app_3_1.xsd" 
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 		xmlns="http://xmlns.jcp.org/xml/ns/javaee" 
 		metadata-complete="false" 
@@ -10,13 +10,13 @@
 	<description>Simple servlet to accept incoming request and retrieve readings from the ThingsBoard database.</description>
 
 	<servlet>
-		<servlet-name>ThingsBoardServlet</servlet-name>
+		<servlet-name>thingsboard_inputAgent</servlet-name>
 		<servlet-class>uk.ac.cam.cares.jps.agent.thingsboard.ThingsBoardInputAgentLauncher</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
-		<servlet-name>ThingsBoardServlet</servlet-name>
-		<url-pattern>/thingsboard_inputAgent</url-pattern>
+		<servlet-name>thingsboard_inputAgent</servlet-name>
+		<url-pattern>/</url-pattern>
 	</servlet-mapping>
 
 </web-app>
