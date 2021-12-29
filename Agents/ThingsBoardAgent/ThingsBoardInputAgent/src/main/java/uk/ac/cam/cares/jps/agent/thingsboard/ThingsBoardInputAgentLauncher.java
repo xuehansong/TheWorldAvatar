@@ -9,6 +9,7 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,20 +44,29 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
     private static final String CONNECTOR_ERROR_MSG = "Could not construct the ThingsBoard API connector needed to interact with the API!";
     private static final String GET_READINGS_ERROR_MSG = "Some readings could not be retrieved.";
 
+    @Override
+    public JSONObject processRequestParameters(JSONObject requestParams, HttpServletRequest request) {
+        return processRequestParameters(requestParams);
+    } 
+    
     
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
+    	JSONObject jsonMessage = new JSONObject();
       if (validateInput(requestParams)) {
         	LOGGER.info("Passing request to ThingsBoard Input Agent..");
             String agentProperties = System.getenv(requestParams.getString(KEY_AGENTPROPERTIES));
             String clientProperties = System.getenv(requestParams.getString(KEY_CLIENTPROPERTIES));
             String apiProperties = System.getenv(requestParams.getString(KEY_APIPROPERTIES));
             String[] args = new String[] {agentProperties,clientProperties,apiProperties};
-            initializeAgent(args);
+            jsonMessage = initializeAgent(args);
+            jsonMessage.accumulate("Result", "Timeseries Data has been updated.");
+            requestParams = jsonMessage;
             }
-        JSONObject jsonMessage = new JSONObject();
-        jsonMessage.put("Result", "Timeseries Data has been updated.");
-        requestParams = jsonMessage;
+      else {
+    	  jsonMessage.put("Result", "Request parameters are not defined correctly.");
+    	  requestParams = jsonMessage;
+      }
 	return requestParams;
 }
     
@@ -72,7 +82,7 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
     		 clientProperties =  (requestParams.getString(KEY_CLIENTPROPERTIES));
     		 apiProperties = (requestParams.getString(KEY_APIPROPERTIES));
       }
-    	 catch (JSONException e) {
+    	 catch (JSONException | JPSRuntimeException e) {
     		 validate = false;
     		 throw new BadRequestException ("Invalid keys in the JSON Object.", e);
     	 }
@@ -100,7 +110,7 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
      *             2) time series client 3) API connector.
      */
     
-    public static void initializeAgent(String[] args) {
+    public static JSONObject initializeAgent(String[] args) {
 
         // Ensure that there are three properties files
         if (args.length != 3) {
@@ -118,6 +128,8 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
             throw new JPSRuntimeException(AGENT_ERROR_MSG, e);
         }
         LOGGER.info("Input agent object initialized.");
+        JSONObject jsonMessage = new JSONObject();
+        jsonMessage.accumulate("Result", "Input agent object initialized.");
 
         // Create and set the time series client
         try {
@@ -128,7 +140,7 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
             throw new JPSRuntimeException(TSCLIENT_ERROR_MSG, e);
         }
         LOGGER.info("Time series client object initialized.");
-
+        jsonMessage.accumulate("Result", "Time series client object initialized.");
         // Initialize time series'
         try {
             agent.initializeTimeSeriesIfNotExist();
@@ -147,6 +159,7 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
             throw new JPSRuntimeException(CONNECTOR_ERROR_MSG, e);
         }
         LOGGER.info("API connector object initialized.");
+        jsonMessage.accumulate("Result", "API connector object initialized.");
         connector.connect();
 
         // Retrieve readings
@@ -161,17 +174,21 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
         }
         LOGGER.info(String.format("Retrieved %d electrical, temperature and humdity readings.",
                 ElectricalTemperatureHumidityReadings.length()));
-
+        jsonMessage.accumulate("Result", "Retrieved " + ElectricalTemperatureHumidityReadings.length() +  
+        		" electrical, temperature and humdity readings.");
         // If readings are not empty there is new data
         if(!ElectricalTemperatureHumidityReadings.isEmpty()) {
             // Update the data
             agent.updateData(ElectricalTemperatureHumidityReadings);
             LOGGER.info("Data updated with new readings from API.");
+            jsonMessage.accumulate("Result", "Data updated with new readings from API.");
         }
         // If all are empty no new readings are available
         else if(ElectricalTemperatureHumidityReadings.isEmpty()) {
             LOGGER.info("No new readings are available.");
+            jsonMessage.accumulate("Result", "No new readings are available.");
         }
+		return jsonMessage;
     }
 
 }
