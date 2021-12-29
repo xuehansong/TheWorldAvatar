@@ -71,8 +71,14 @@ public class ThingsBoardInputAgent{
             // Load properties file from specified path
             Properties prop = new Properties();
             prop.load(input);
+            String mappingFolder;
+            try {
             // Read the mappings folder from the properties file
-            String mappingFolder = prop.getProperty("thingsboard.mappingfolder");
+            mappingFolder = System.getenv(prop.getProperty("thingsboard.mappingfolder"));
+            }
+            catch (NullPointerException e) {
+            	throw new IOException ("The key thingsboard.mappingfolder cannot be found in the properties file.");
+            }
             if (mappingFolder == null) {
                 throw new InvalidPropertiesFormatException("The properties file does not contain the key thingsboard.mappingfolder " +
                         "with a path to the folder containing the required JSON key to IRI mappings.");
