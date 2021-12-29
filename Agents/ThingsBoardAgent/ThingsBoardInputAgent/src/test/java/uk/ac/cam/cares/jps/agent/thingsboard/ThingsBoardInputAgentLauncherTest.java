@@ -9,8 +9,10 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
-import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import com.github.stefanbirkner.systemlambda.SystemLambda;
 
+
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -34,11 +36,15 @@ public class ThingsBoardInputAgentLauncherTest {
         File clientPropertyFile= folder.newFile(clientPropertiesFilename);
         File apiPropertyFile= folder.newFile(apiPropertiesFilename);
         // Paths to the three different property files
+       
         String agentPropertiesFile = agentPropertyFile.getCanonicalPath();
         String clientPropertiesFile = clientPropertyFile.getCanonicalPath();
         String apiPropertiesFile = apiPropertyFile.getCanonicalPath();
-
         args = new String[] {agentPropertiesFile, clientPropertiesFile, apiPropertiesFile};
+        
+        
+
+
     }
 
     @Test
@@ -68,15 +74,24 @@ public class ThingsBoardInputAgentLauncherTest {
 
     @Test
     public void testMainErrorWhenCreatingTSClient() throws IOException {
+    	//create agent properties file
         createProperAgentPropertiesFile();
+        //Create folder with mapping file
+        String folderName = "mappings";
+        File mappingFolder = folder.newFolder(folderName);
+        // Create empty file in mappings folder
+        File mappingFile = new File(Paths.get(mappingFolder.getCanonicalPath(), "allTypes.properties").toString());
+        Assert.assertTrue(mappingFile.createNewFile());
         // Empty properties file for time series client should result in exception
+        //
         try {
-            ThingsBoardInputAgentLauncher.initializeAgent(args);
-            Assert.fail();
+        	SystemLambda.withEnvironmentVariable("TEST_MAPPINGS", mappingFolder.getCanonicalPath()).execute(() -> {
+        	ThingsBoardInputAgentLauncher.initializeAgent(args);
+        	 });
         }
-        catch (JPSRuntimeException e) {
+        catch (Exception e) {
             Assert.assertEquals("Could not construct the time series client needed by the input agent!", e.getMessage());
-        }
+        } 
 
     }
 
@@ -159,16 +174,10 @@ public class ThingsBoardInputAgentLauncherTest {
     private void createProperAgentPropertiesFile() throws IOException {
         // Create a properties file that points to the example/test mapping folder in the resources //
         // Create mappings folder
-        String folderName = "mappings";
-        File mappingFolder = folder.newFolder(folderName);
-        // Create empty file in mappings folder
-        File mappingFile = new File(Paths.get(mappingFolder.getCanonicalPath(), "allTypes.properties").toString());
-        Assert.assertTrue(mappingFile.createNewFile());
         // Filepath for the properties file
         String propertiesFile = Paths.get(folder.getRoot().toString(), agentPropertiesFilename).toString();
         try (FileWriter writer = new FileWriter(propertiesFile, false)) {
-            writer.write("thingsboard.mappingfolder=" + mappingFolder.getCanonicalPath().
-                    replace("\\","/") + "\n");
+            writer.write("thingsboard.mappingfolder=TEST_MAPPINGS");
         }
     }
 
@@ -192,6 +201,7 @@ public class ThingsBoardInputAgentLauncherTest {
             writer.write("thingsboard.password=password\n");
             writer.write("path.url=http://localhost:9090\n");
             writer.write("device.token=f6e2fac0-4b9a-11ec-bc75-d14ed3d0d946");
+           
         }
     }
 }
