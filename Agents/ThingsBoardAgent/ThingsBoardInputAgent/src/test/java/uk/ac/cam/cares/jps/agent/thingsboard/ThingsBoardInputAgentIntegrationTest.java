@@ -10,6 +10,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import com.github.stefanbirkner.systemlambda.SystemLambda;
+
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
@@ -97,10 +100,16 @@ public class ThingsBoardInputAgentIntegrationTest {
         writePropertyFile(allTypesMappingFile, allTypesMappings);
         // Filepath for the properties file
         String propertiesFile = Paths.get(folder.getRoot().toString(), "agent.properties").toString();
-        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=" + mappingFolder.getCanonicalPath().
-                replace("\\","/")));
+        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=TEST_MAPPINGS"));
+        try {
+        	SystemLambda.withEnvironmentVariable("TEST_MAPPINGS", mappingFolder.getCanonicalPath()).execute(() -> {
+        		 agent = new ThingsBoardInputAgent(propertiesFile);
+        	 });
+        }
+        catch (Exception e) {
+        } 
         // Create agent
-        agent = new ThingsBoardInputAgent(propertiesFile);
+       
 
         // Create and set time-series client //
         // Set endpoint to the triple store. The host and port are read from the container
