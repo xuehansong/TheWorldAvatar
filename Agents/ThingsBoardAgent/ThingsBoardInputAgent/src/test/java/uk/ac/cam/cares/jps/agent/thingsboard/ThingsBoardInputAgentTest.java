@@ -7,6 +7,8 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import com.github.stefanbirkner.systemlambda.SystemLambda;
+
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
 
@@ -57,10 +59,17 @@ public class ThingsBoardInputAgentTest {
         writePropertyFile(mappingFile, mappings);
         // Filepath for the properties file
         String propertiesFile = Paths.get(folder.getRoot().toString(), "agent.properties").toString();
-        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=" + mappingFolder.getCanonicalPath().
-                replace("\\","/")));
-        // Create agent
-        testAgent = new ThingsBoardInputAgent(propertiesFile);
+        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=TEST_MAPPINGS"));
+        // To create testAgent without an exception being thrown, SystemLambda is used to mock an environment variable
+        // To mock the environment variable, a try catch need to be used
+        try {
+        	SystemLambda.withEnvironmentVariable("TEST_MAPPINGS", mappingFolder.getCanonicalPath()).execute(() -> {
+        		 testAgent = new ThingsBoardInputAgent(propertiesFile);
+        	 });
+        }
+        // There should not be any exception thrown as the agent is initiated correctly
+        catch (Exception e) {
+        }
         // Set the mocked time series client
         testAgent.setTsClient(mockTSClient);
     }
@@ -257,11 +266,11 @@ public class ThingsBoardInputAgentTest {
             new ThingsBoardInputAgent(propertiesFile);
             Assert.fail();
         }
-        catch (InvalidPropertiesFormatException e) {
-            Assert.assertEquals("The properties file does not contain the key thingsboard.mappingfolder " +
-                    "with a path to the folder containing the required JSON key to IRI mappings.", e.getMessage());
+        
+        catch (IOException e) {
+            Assert.assertEquals("The key thingsboard.mappingfolder cannot be found in the properties file.", e.getMessage());
         }
-
+       
         // Create a property file with a mapping folder that does not exist
         String folderName = "no_valid_folder";
         writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=" + folderName));
@@ -270,9 +279,9 @@ public class ThingsBoardInputAgentTest {
             new ThingsBoardInputAgent(propertiesFile);
             Assert.fail();
         }
-        catch (IOException e) {
-            Assert.assertTrue(e.getMessage().contains("Folder does not exist:"));
-            Assert.assertTrue(e.getMessage().contains(folderName));
+        catch (InvalidPropertiesFormatException e) {
+        	Assert.assertEquals("The properties file does not contain the key thingsboard.mappingfolder " +
+                    "with a path to the folder containing the required JSON key to IRI mappings.", e.getMessage());
         }
 
         // Create an empty folder
@@ -280,21 +289,22 @@ public class ThingsBoardInputAgentTest {
         File mappingFolder = folder.newFolder(folderName);
         // Create a property file with the empty folder
         folderName = mappingFolder.getCanonicalPath().replace("\\","/");
-        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=" + folderName));
+        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=TEST_MAPPINGS"));
         // Run constructor that should give an exception
         try {
-            new ThingsBoardInputAgent(propertiesFile);
-            Assert.fail();
+        	SystemLambda.withEnvironmentVariable("TEST_MAPPINGS", mappingFolder.getCanonicalPath()).execute(() -> {
+        		new ThingsBoardInputAgent(propertiesFile);
+        		Assert.fail();
+        	 });
         }
-        catch (IOException e) {
-            Assert.assertTrue(e.getMessage().contains("No files in the folder:"));
-            Assert.assertTrue(e.getMessage().contains(folderName));
+        catch (Exception e) {
+        	Assert.assertTrue(e.getMessage().contains("No files in the folder:"));
         }
 
         // Add mapping files into the empty folder
         // All IRIs set
         String firstMappingFile = Paths.get(mappingFolder.getAbsolutePath(), "firstMapping.properties").toString();
-        String[] keys = {"Current", "Voltage" ,"Power", "Energy", "PF", "Temperature", "Humidity", "IntTemp"};
+        String[] keys = {"Current", "Voltage" ,"Power", "Energy", "PF", "Temp", "Humidity", "IntTemp"};
         ArrayList<String> mappings = new ArrayList<>();
         for (String key: keys) {
             mappings.add(key + "=example:prefix/api_" + key);
@@ -310,11 +320,18 @@ public class ThingsBoardInputAgentTest {
         // Save the size of the files for assertions later
         long firstMappingFileSize = Files.size(Paths.get(firstMappingFile));
         long secondMappingFileSize = Files.size(Paths.get(secondMappingFile));
-        
         // Create agent
-        ThingsBoardInputAgent agent = new ThingsBoardInputAgent(propertiesFile);
-        // Assert that the mappings were set
-        Assert.assertEquals(2, agent.getNumberOfTimeSeries());
+        try {
+        	SystemLambda.withEnvironmentVariable("TEST_MAPPINGS", mappingFolder.getCanonicalPath()).execute(() -> {
+        		ThingsBoardInputAgent agent = new ThingsBoardInputAgent(propertiesFile);
+        		// Assert that the mappings were set
+                Assert.assertEquals(2, agent.getNumberOfTimeSeries());
+        	 });
+        }
+        //No exception should be thrown here, this is required in order to use System.lambda to mock the environment variables
+        catch (Exception e) {
+        }
+        
         // Assert that the mappings were saved back (now bigger file size)
         Assert.assertTrue(Files.size(Paths.get(firstMappingFile)) > firstMappingFileSize);
         Assert.assertTrue(Files.size(Paths.get(secondMappingFile)) > secondMappingFileSize);
@@ -513,7 +530,7 @@ public class ThingsBoardInputAgentTest {
         assert allReadings.getJSONArray(keys[0]).length() > numEntriesToKeep;
         long timestamp = allReadings.getJSONArray(keys[0]).getJSONObject(allReadings.getJSONArray(keys[0]).length()-2)
                 .getLong(ThingsBoardInputAgent.timestampKey);
-        Date date = new java.util.Date(timestamp+2);
+        Date date = new java.util.Date(timestamp);
     	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     	String maxTime = sdf.format(date);
     	
@@ -534,7 +551,7 @@ public class ThingsBoardInputAgentTest {
         }
         // Number of unique keys in both readings should match the number of IRIs
         Set<String> uniqueKeys = new HashSet<>(allReadings.keySet());
-        // Timestamp key has no match (therefore -1)
+       
         Assert.assertEquals(uniqueKeys.size(), numIRIs);
     }
     
@@ -664,13 +681,17 @@ public class ThingsBoardInputAgentTest {
                 }
             }
         }
-        // Create a properties file that points to the created mapping folder
-        String mappingFolderPath = mappingFolder.getCanonicalPath().replace("\\","/");
         // Filepath for the properties file
         String propertiesFile = Paths.get(folder.getRoot().toString(), "agent.properties").toString();
-        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=" + mappingFolderPath));
+        writePropertyFile(propertiesFile, Collections.singletonList("thingsboard.mappingfolder=TEST_MAPPINGS"));
         // Create agent
-        ThingsBoardInputAgent agent = new ThingsBoardInputAgent(propertiesFile);
+        //Mock environment variable TEST_MAPPINGS to be equivalent to the file path for the mapping folder
+        try {
+        	SystemLambda.withEnvironmentVariable("TEST_MAPPINGS", mappingFolder.getCanonicalPath()).execute(() -> {
+        		ThingsBoardInputAgent agent = new ThingsBoardInputAgent(propertiesFile);
+        		// Assert that the mappings were set
+        	 
+        
        
         String[] Timestamps = {"2021-07-11T16:10:00", "2021-07-11T16:15:00",
                 "2021-07-11T16:20:00", "2021-07-11T16:25:00"};
@@ -718,11 +739,16 @@ public class ThingsBoardInputAgentTest {
                     // The size of value should match the number of time stamps
                     Assert.assertEquals(timeStampReadings.get(ThingsBoardInputAgent.timestampKey).size(), values.size());
                     Assert.assertEquals(Double.class, values.get(0).getClass());
-                    // Check values (all keys have the same value list
+                    // Check values 
                     Assert.assertEquals(allReadings.get(allTypesKeys[0]), values);
                 }
             }
            
+        }
+        });
+        }
+        //No exception should be thrown here, this is required in order to use System.lambda to mock the environment variables
+        catch (Exception e) {
         }
     }
    
