@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.jps.agent.thingsboard;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
@@ -76,29 +75,36 @@ public class ThingsBoardInputAgentLauncher extends JPSAgent {
       String agentProperties;
       String apiProperties;
       String clientProperties;
-      if (!requestParams.isEmpty()) {
-    	 try {
-    		 agentProperties = (requestParams.getString(KEY_AGENTPROPERTIES));
-    		 clientProperties =  (requestParams.getString(KEY_CLIENTPROPERTIES));
-    		 apiProperties = (requestParams.getString(KEY_APIPROPERTIES));
+      if (requestParams.isEmpty()) {
+    	  validate = false;
       }
-    	 catch (JSONException | JPSRuntimeException e) {
-    		 validate = false;
-    		 throw new BadRequestException ("Invalid keys in the JSON Object.", e);
-    	 }
-    	 if (System.getenv(agentProperties) == null){
-    		 validate = false;
-    		 LOGGER.error("The environment variable does not point to a valid agent properties file.");
-    		 }
-    	 if (System.getenv(apiProperties) == null){
-    		 validate = false;
-    		 LOGGER.error("The environment variable does not point to a valid api properties file.");
-    		 }
-    	 if (System.getenv(clientProperties) == null){
-    		 validate = false;
-    		 LOGGER.error("The environment variable does not point to a valid client properties file.");
-    		 }
-    	 }
+      else {
+ 		 validate = requestParams.has(KEY_AGENTPROPERTIES);
+ 		 if (validate == true) {
+ 		 validate = requestParams.has(KEY_CLIENTPROPERTIES);
+ 		 }
+ 		 if (validate == true) {
+ 		 validate = requestParams.has(KEY_APIPROPERTIES);
+ 		 }
+ 		 if (validate == true) {
+ 		 agentProperties = (requestParams.getString(KEY_AGENTPROPERTIES));
+ 		 clientProperties =  (requestParams.getString(KEY_CLIENTPROPERTIES));
+ 		 apiProperties = (requestParams.getString(KEY_APIPROPERTIES));
+ 			 
+ 		if (System.getenv(agentProperties) == null) {
+ 			validate = false;
+ 		 
+ 		 }
+ 		if (System.getenv(apiProperties) == null) {
+ 			validate = false;
+ 		 
+ 		 }
+ 		if (System.getenv(clientProperties) == null) {
+ 			validate = false;
+ 		
+ 		 }
+ 	 }
+ 		 }
 	return validate;
     }
     
