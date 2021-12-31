@@ -206,7 +206,7 @@ Maven will automatically run all unit tests before packaging. The war file can t
 To run the agent, firstly, copy the mapping folder and the 3 properties files in the `config` folder and place them in a new folder somewhere else.
 Modify the mapping file and properties files accordingly. Add new environment variables pointing to the location of the mapping folder and the 3 properties files.
 
-![Shows the environment variables pointing to the location of the mapping folder and the 3 properties files.](docs/img/environment_variables.png "Environment variables")
+![Shows the environment variables pointing to the location of the mapping folder and the 3 properties files.](docs/img/environment_variables.PNG "Environment variables")
 
 As described [above](#mapping-files), mapping configurations are required as well (the location can be set in the agent property file). 
 These mapping files need to be kept persistent, so once the agent is run they should not be modified anymore. 
