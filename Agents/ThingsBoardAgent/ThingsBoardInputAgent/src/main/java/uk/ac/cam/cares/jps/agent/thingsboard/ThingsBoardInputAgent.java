@@ -232,7 +232,7 @@ public class ThingsBoardInputAgent{
         // First save the values as Object //
     	//readingsMap is a map with keys as String and each key is mapped to a list of objects.
         Map<String, List<Object>> readingsMapTimeStamp = new HashMap<>();
-        String[] keys = new String[readings.length()+1];
+        String[] keys = new String[readings.length()];
         JSONArray tsAndValue = new JSONArray();
         int a = 0;
         for (Iterator<String> it = readings.keys(); it.hasNext();) {     
@@ -321,18 +321,6 @@ public class ThingsBoardInputAgent{
                 	JSONObject timeSeriesEntry = tsAndValue.getJSONObject(j);
                 	Object value = timeSeriesEntry.get("value");
                 //The values are of string type in the JSON Object, convert them to double
-                	/*if (value == JSONObject.NULL || value.toString() == "NAN") {
-                    // Handling depends on the datatype of the current key
-                    String datatype = getClassFromJSONKey(key).getSimpleName();
-                    // If it is a number use NaN (not a number)
-                    if (datatype.equals(Double.class.getSimpleName())) {
-                        value = Double.NaN;
-                    }
-                    // Otherwise, use the string NA (not available)
-                    else {
-                        value = "NA";
-                    }
-                }*/
                 	try {
                     	value = Double.valueOf(timeSeriesEntry.get("value").toString());
                     	}
