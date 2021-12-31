@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.jps.agent.thingsboard;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -9,10 +11,12 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
+
+import com.github.stefanbirkner.systemlambda.Statement;
 import com.github.stefanbirkner.systemlambda.SystemLambda;
-
-
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,6 +24,9 @@ import java.nio.file.Paths;
 
 public class ThingsBoardInputAgentLauncherTest {
 
+	
+	private static final Logger LOGGER = LogManager.getLogger(ThingsBoardInputAgentLauncherTest.class);
+	
     // Temporary folder to place a properties file
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -46,7 +53,47 @@ public class ThingsBoardInputAgentLauncherTest {
 
 
     }
-
+    
+    @Test
+    public void testProcessRequestParams() throws IOException {
+    	ThingsBoardInputAgentLauncher testLauncher = new ThingsBoardInputAgentLauncher();
+    	//test empty requestparams
+    	JSONObject testRequestParams = new JSONObject();
+    	JSONObject testMessage = testLauncher.processRequestParameters(testRequestParams);
+    Assert.assertEquals(testMessage.get("Result"), "Request parameters are not defined correctly.");
+       //test non-empty requestParams but with incorrect keys
+    
+    testRequestParams.put("ageProperties", "TEST_AGENTPROPERTIES");
+    testRequestParams.put("apiProperties", "TEST_APIPROPERTIES");
+    testRequestParams.put("clientProperties", "TEST_CLIENTPROPERTIES");
+   
+    testMessage = testLauncher.processRequestParameters(testRequestParams);
+    Assert.assertEquals(testMessage.get("Result"), "Request parameters are not defined correctly.");
+    
+    //test invalid environment variables in requestParams
+    testRequestParams.remove("ageProperties");
+    testRequestParams.put("agentProperties", "TEST_AGENTPROPERTIE");
+    testRequestParams.put("apiProperties", "TEST_APIPROPERTIES");
+    testRequestParams.put("clientProperties", "TEST_CLIENTPROPERTIES");
+    
+    String folderName = "mappings";
+    File mappingFolder = folder.newFolder(folderName);
+    // Create empty file in mappings folder
+    File mappingFile = new File(Paths.get(mappingFolder.getCanonicalPath(), "allTypes.properties").toString());
+    Assert.assertTrue(mappingFile.createNewFile());
+    //try and catch is required to use SystemLambda to mock environment variables
+    //invalid environment variables TEST_AGENTPROPERTIE should cause validateInput to return back false and processRequestParameters to
+    //return back the jsonMessage {"Result":"Request parameters are not defined correctly."}
+    try {
+    	SystemLambda.withEnvironmentVariable("TEST_AGENTPROPERTIES", mappingFolder.getCanonicalPath()).execute((Statement) () -> {
+    		JSONObject testMessage01 = testLauncher.processRequestParameters(testRequestParams);
+    		Assert.assertEquals(testMessage01.get("Result"), "Request parameters are not defined correctly.");
+    		});
+		} catch (Exception e) {
+		//no Exception should be thrown here
+		}
+    }
+    
     @Test
     public void testMainNoArgs() {
         String[] args = {};
