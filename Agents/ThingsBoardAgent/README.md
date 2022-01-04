@@ -223,7 +223,7 @@ but the keys agentProperties, apiProperties, clientProperties must be fixed.
 ```
 POST http://localhost:8080/thingsboard_inputAgent/retrieve
 Content-Type: application/json
-{"agentProperties":"THINGSBOARD_AGENT_AGENTPROPERTIES","apiProperties":"THINGSBOARD_AGENT_APIPROPERTIES","clientProperties":"THINGSBOARD_AGENT_CLIENTPROPERTIES"}"
+{"agentProperties":"THINGSBOARD_AGENT_AGENTPROPERTIES","apiProperties":"THINGSBOARD_AGENT_APIPROPERTIES","clientProperties":"THINGSBOARD_AGENT_CLIENTPROPERTIES"}
 ```
 
 If the agent run successfully, you should see a JSON Object returned back that is similar to the one shown below.
