@@ -251,7 +251,7 @@ public class ThingsBoardInputAgent{
                 	
                 	Date date = new java.util.Date(timestamp);
                 	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                	sdf.setTimeZone(TimeZone.getDefault());
+                	sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                 	Object ts = sdf.format(date);
                 	
                 	

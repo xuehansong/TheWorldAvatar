@@ -38,21 +38,12 @@ public class ThingsBoardAPIConnector {
     
     /*
     /**
-     * StartTs is the first starting Timestamp during initial request. 
+     * StartTs is the starting Timestamp. 
      * 
      */
 	
 	final static long STARTTS = 1;
-	 
 	
-    /**
-     * EndTs is the first ending Timestamp during initial request
-     */
-    
-    final static long ENDTS = System.currentTimeMillis();
-   
-
-	//public long previousEndTs = 0;
     
      /**
      * Token needed for all API calls (except to retrieve token)
@@ -229,7 +220,7 @@ public class ThingsBoardAPIConnector {
         String latestReadingPath = String.join("=",basicReadingPath,  readingType  );
         
         startTs = 1;
-        endTs = ENDTS;        
+        endTs = System.currentTimeMillis();        
         LOGGER.info("The readings are retrieved from startTs= " + startTs +"to endTs=" + endTs);
         String historicalReadingPath = String.join("&", latestReadingPath, "startTs="+startTs, "endTs="+endTs, "limit=3600", "agg=NONE");
         
