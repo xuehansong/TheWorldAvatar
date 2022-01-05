@@ -28,13 +28,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * This test class is to test the ThingsBoard input agent with a running KG and postgres database.
  */
-@Ignore("Requires both triple store endpoint and postgreSQL database set up and running (using testcontainers)\n" +
+/*@Ignore("Requires both triple store endpoint and postgreSQL database set up and running (using testcontainers)\n" +
         "Requires Docker to run the tests. When on Windows, WSL2 as backend is required to ensure proper execution.")
-
+*/
 @Testcontainers
 public class ThingsBoardInputAgentIntegrationTest {
 
@@ -151,6 +152,7 @@ public class ThingsBoardInputAgentIntegrationTest {
         for (int i = 0; i < ts.length; i++) { 
         Date date = new java.util.Date(ts[i]);
     	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    	sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
     	String dateTime = sdf.format(date);
     	timestamps[timestamps.length - 1 - i] = dateTime;
         }

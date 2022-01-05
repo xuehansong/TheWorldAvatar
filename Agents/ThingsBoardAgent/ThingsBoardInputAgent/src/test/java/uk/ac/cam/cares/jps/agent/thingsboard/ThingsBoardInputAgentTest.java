@@ -328,7 +328,6 @@ public class ThingsBoardInputAgentTest {
                 Assert.assertEquals(2, agent.getNumberOfTimeSeries());
         	 });
         }
-        //No exception should be thrown here, this is required in order to use System.lambda to mock the environment variables
         catch (Exception e) {
         }
         
@@ -635,28 +634,31 @@ public class ThingsBoardInputAgentTest {
         long ts_01 = 1234560000000L;
         Date date = new java.util.Date(ts_01);
     	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-    	sdf.setTimeZone(TimeZone.getDefault());
+    	sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
     	Object ts01 = sdf.format(date);
         long ts_02 = 1250560000000L;
         Date date02 = new java.util.Date(ts_02);
     	SimpleDateFormat sdf02 = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    	sdf02.setTimeZone(TimeZone.getTimeZone("UTC"));
     	Object ts02 = sdf02.format(date02);
         long ts_03 = 1266560000000L;
         Date date03 = new java.util.Date(ts_03);
     	SimpleDateFormat sdf03 = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    	sdf03.setTimeZone(TimeZone.getTimeZone("UTC"));
     	Object ts03 = sdf03.format(date03);
     	long ts_04 = 1282560000000L;
         Date date04 = new java.util.Date(ts_04);
     	SimpleDateFormat sdf04 = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    	sdf04.setTimeZone(TimeZone.getTimeZone("UTC"));
     	Object ts04 = sdf04.format(date04);
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts01));
-        Assert.assertEquals("2009-02-14T05:20:00", readings.get(ThingsBoardInputAgent.timestampKey).get(0));
+        Assert.assertEquals("2009-02-13T21:20:00", readings.get(ThingsBoardInputAgent.timestampKey).get(0));
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts02));
-        Assert.assertEquals("2009-08-18T09:46:40", readings.get(ThingsBoardInputAgent.timestampKey).get(1));
+        Assert.assertEquals("2009-08-18T01:46:40", readings.get(ThingsBoardInputAgent.timestampKey).get(1));
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts03));
-        Assert.assertEquals("2010-02-19T14:13:20", readings.get(ThingsBoardInputAgent.timestampKey).get(2));
+        Assert.assertEquals("2010-02-19T06:13:20", readings.get(ThingsBoardInputAgent.timestampKey).get(2));
         Assert.assertTrue(readings.get(ThingsBoardInputAgent.timestampKey).contains(ts04));
-        Assert.assertEquals("2010-08-23T18:40:00", readings.get(ThingsBoardInputAgent.timestampKey).get(3));
+        Assert.assertEquals("2010-08-23T10:40:00", readings.get(ThingsBoardInputAgent.timestampKey).get(3));
         Assert.assertEquals(allReadings.getJSONArray(keys[0]).length(), readings.get(ThingsBoardInputAgent.timestampKey).size());
     }
 
