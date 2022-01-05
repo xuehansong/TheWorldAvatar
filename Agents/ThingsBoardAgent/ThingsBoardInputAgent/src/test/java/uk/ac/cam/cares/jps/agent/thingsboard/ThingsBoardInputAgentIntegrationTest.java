@@ -33,9 +33,9 @@ import java.util.TimeZone;
 /**
  * This test class is to test the ThingsBoard input agent with a running KG and postgres database.
  */
-/*@Ignore("Requires both triple store endpoint and postgreSQL database set up and running (using testcontainers)\n" +
+@Ignore("Requires both triple store endpoint and postgreSQL database set up and running (using testcontainers)\n" +
         "Requires Docker to run the tests. When on Windows, WSL2 as backend is required to ensure proper execution.")
-*/
+
 @Testcontainers
 public class ThingsBoardInputAgentIntegrationTest {
 
