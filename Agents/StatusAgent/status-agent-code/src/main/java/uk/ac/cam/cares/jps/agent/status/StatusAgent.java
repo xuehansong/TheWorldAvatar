@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import uk.ac.cam.cares.jps.agent.status.process.StatusRequest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import uk.ac.cam.cares.jps.agent.status.process.DashboardRequest;
 import uk.ac.cam.cares.jps.agent.status.process.SubmitRequest;
+import uk.ac.cam.cares.jps.agent.status.record.TestRecord;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.email.EmailSender;
 
@@ -73,48 +75,64 @@ public class StatusAgent extends JPSAgent {
         super.init();
 
         if (SCHEDULER == null) {
+            LOGGER.info("StatusAgent object has been created for the first time.");
             
+            // Add shutdown hook for debugging
+            Thread shutdownHook = new Thread(() -> LOGGER.info("JVM is being shutdown."));
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
+
             // Read the test registry
             Path registryFile = Paths.get(System.getProperty("user.home"), ".jps", "test-registry.json");
             TestRegistry.readRegistryFile(registryFile);
-            
-            // Run all test on boot, then run  once per day
+
+            // Run all tests on boot, then run once per day
             Runnable runnable = () -> {
-                LOGGER.info("Running scheduled tests...");
-                
-                boolean allSuccess = handler.runAllTests();
-                if (!allSuccess) {
-                    sendErrorReport();
-                } else {
-                    LOGGER.info("All scheduled tests have passed.");
+                try {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSS");
+                    String datetime = dateFormat.format(new Date());
+                    LOGGER.info("Running scheduled tests at " + datetime);
+
+                    List<TestRecord> records = handler.runAllTests();
+                    if (anyFailures(records)) {
+                        LOGGER.info("Not all tests have passed, sending error report...");
+                        sendErrorReport(records);
+                        LOGGER.info("Error report should now have been sent.");
+                    } else {
+                        LOGGER.info("All scheduled tests have passed.");
+                    }
+                } catch (Exception exception) {
+                    LOGGER.error("Encountered exception!", exception);
                 }
             };
             SCHEDULER = Executors.newScheduledThreadPool(1);
-            SCHEDULER.scheduleAtFixedRate(
-                    runnable,
-                    0,
-                    1,
-                    TimeUnit.DAYS
-            );
+            SCHEDULER.scheduleAtFixedRate(runnable, 0, 1, TimeUnit.DAYS);
         }
     }
 
     /**
      * Triggers if the scheduled tests result in any failures, send a notification email via the JPS
      * Base Library's EmailSender class.
+     *
+     * @param records test records
      */
-    private void sendErrorReport() {
+    private void sendErrorReport(List<TestRecord> records) {
         EmailSender sender = new EmailSender();
 
         String subject = "StatusAgent - Failures Detected";
         String body = "This is an automated notification from the StatusAgent servlet. One (or more) of the regularly "
-                + "scheduled tests has reported a failed result.\n\nPlease view the online dashboard for the StatusAgent "
-                + "for more details on which test has failed.";
+                + "scheduled tests has reported a failed result.A list of the tests run in the most recent batch, and their results, is shown below."
+                + "\n\nPlease view the online dashboard (or the log) of the StatusAgent for more details.\n\n\n";
+
+        for (TestRecord record : records) {
+            body += record.getDefinition().getName() + ": ";
+            body += (record.getResult()) ? "Success" : "Failed";
+            body += "\n";
+        }
 
         try {
-            LOGGER.info("Failure detected in scheduled tests, attemping to send notification...");
+            LOGGER.info("Attemping to send notification...");
             sender.sendEmail(subject, body);
-            LOGGER.info("...email notification sent.");
+            LOGGER.info("...email notification sent?");
         } catch (Exception exception) {
             LOGGER.error("Could not send notification via EmailSender class!", exception);
         }
@@ -173,6 +191,19 @@ public class StatusAgent extends JPSAgent {
             LOGGER.error("Could not find and run the correct StatusRequest handler");
             response.setStatus(Response.Status.SERVICE_UNAVAILABLE.getStatusCode());
         }
+    }
+
+    /**
+     * Returns true if any of the input TestRecord instances encountered failures.
+     *
+     * @param records test records
+     * @return true if any failures
+     */
+    public static boolean anyFailures(List<TestRecord> records) {
+        for (TestRecord record : records) {
+            if (!record.getResult()) return true;
+        }
+        return false;
     }
 
 }

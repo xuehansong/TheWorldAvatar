@@ -1,12 +1,16 @@
 package uk.ac.cam.cares.jps.agent.status.process;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import org.json.JSONObject;
+import uk.ac.cam.cares.jps.agent.status.StatusAgent;
 import uk.ac.cam.cares.jps.agent.status.TestHandler;
+import uk.ac.cam.cares.jps.agent.status.record.TestRecord;
 
 /**
  * Handles generation of response for requests to view the main dashboard.
@@ -36,16 +40,16 @@ public class SubmitRequest extends StatusRequest {
         String testName = parameters.getString("NAME");
         String testType = parameters.getString("TYPE");
 
-        boolean submitted = false;
+        List<TestRecord> records = new ArrayList<>();
         if (testName.equals("ALL") || testType == "ALL") {
             // Run all tests
-            submitted = handler.runAllTests();
+            records = handler.runAllTests();
         } else {
             // Run single test case
-            submitted = handler.runTest(testName, testType);
+            records.add(handler.runTest(testName, testType));
         }
 
-        if (submitted) {
+        if (!StatusAgent.anyFailures(records)) {
             response.getWriter().write("<html>Test submitted successfully.</html>");
             response.setStatus(200);
         } else {

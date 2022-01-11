@@ -1,0 +1,57 @@
+[
+	{
+		"name": "prod/ontogasgrid",
+		"type": "AVAILABILITY",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/ontogasgrid/sparql"
+		}
+	},
+	{
+		"name": "prod/landuse",
+		"type": "AVAILABILITY",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/landuse/sparql"
+		}
+	},
+	{
+		"name": "prod/flood",
+		"type": "AVAILABILITY",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/flood/sparql"
+		}
+	},
+	{
+		"name": "prod/weather",
+		"type": "AVAILABILITY",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/weather/sparql"
+		}
+	},
+	{
+		"name": "prod/gas-terminals",
+		"type": "QUERY_COUNT",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/ontogasgrid/sparql",
+			"query-file": "gas-terminal-count.sparql",
+			"minimum": "9"
+		}
+	},
+	{
+		"name": "prod/gas-offtakes",
+		"type": "QUERY_COUNT",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/ontogasgrid/sparql",
+			"query-file": "gas-offtake-count.sparql",
+			"minimum": "182"
+		}
+	},
+		{
+		"name": "prod/gas-pipes",
+		"type": "QUERY_COUNT",
+		"inputs": {
+			"endpoint": "https://kg.cmclinnovations.com/blazegraph_geo/namespace/ontogasgrid/sparql",
+			"query-file": "gas-pipe-count.sparql",
+			"minimum": "161399"
+		}
+	}
+]

@@ -34,7 +34,7 @@ WORKDIR /app
 COPY --from=build /root/status-agent-code/output/status_agent##1.0.0-SNAPSHOT.war $CATALINA_HOME/webapps/
 
 # Copy in the test-registry.json file
-COPY docker/test-registry.json /root/.jps/test-registry.json
+COPY test-registry.json /root/.jps/test-registry.json
 
 # Copy in the query files
 COPY queries /root/.jps/queries

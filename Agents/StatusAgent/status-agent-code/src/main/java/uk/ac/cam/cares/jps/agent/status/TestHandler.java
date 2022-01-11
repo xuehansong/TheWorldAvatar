@@ -1,6 +1,8 @@
 package uk.ac.cam.cares.jps.agent.status;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -28,7 +30,7 @@ public class TestHandler {
      * Historical test results.
      */
     private final TestRecordStore recordStore;
-
+    
     /**
      * Initialise a new TestHandler instance.
      */
@@ -48,18 +50,16 @@ public class TestHandler {
     /**
      * Execute all registered tests in serial.
      *
-     * @return false if ANY tests fail.
+     * @return list of test results.
      */
-    public synchronized boolean runAllTests() {
-        boolean allSuccess = true;
+    public synchronized List<TestRecord> runAllTests() {
+        List<TestRecord> records = new ArrayList<>();
 
         // Run all the tests
         for (TestDefinition definition : TestRegistry.getDefinedTests()) {
-            boolean singleSuccess = runTest(definition);
-            if (!singleSuccess) allSuccess = false;
+            records.add(runTest(definition));
         }
-
-        return allSuccess;
+        return records;
     }
 
     /**
@@ -67,30 +67,32 @@ public class TestHandler {
      *
      * @param testName test name.
      * @param testType test type.
+     * 
      * @return test result.
      */
-    public synchronized boolean runTest(String testName, String testType) {
+    public synchronized TestRecord runTest(String testName, String testType) {
         TestDefinition definition = null;
         try {
             definition = TestRegistry.getDefinedTest(testName, TestType.valueOf(testType));
         } catch (Exception exception) {
             // Could happen if testType is an invalid value
-            return false;
+            return null;
         }
 
         if (definition != null) {
             return runTest(definition);
         }
-        return false;
+        return null;
     }
 
     /**
      * Run a single test.
      *
      * @param definition test definition.
+     * 
      * @return test result.
      */
-    public boolean runTest(TestDefinition definition) {
+    public synchronized TestRecord runTest(TestDefinition definition) {
         try {
             // Find the executor class registered for that definition
             Class<? extends TestExecutor> executorClass = TestUtils.getExecutorForType(definition.getType());
@@ -116,13 +118,13 @@ public class TestHandler {
                 
                 // Write the updated TestRecordStore to file
                 TestRecordStoreMarshaller.writeRecords(recordStore);
-                return record.getResult();
+                return record;
             }
-            return false;
+            return null;
 
         } catch (Exception exception) {
             LOGGER.error("Could not create/run TestExecutor instance for '" + definition.getName() + "' test.", exception);
-            return false;
+            return null;
         }
     }
 

@@ -133,6 +133,7 @@ public class TestRecordStoreMarshaller {
                 store.addRecord(testRecord);
             }
 
+            LOGGER.info("Existing records have been read, there are " + store.getRecords().size() + " records present.");
             return store;
 
         } catch (FileNotFoundException | NoSuchFileException exception) {
