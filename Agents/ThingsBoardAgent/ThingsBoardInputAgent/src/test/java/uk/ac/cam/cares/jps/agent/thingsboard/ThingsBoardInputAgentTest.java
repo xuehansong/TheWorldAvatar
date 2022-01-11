@@ -760,16 +760,17 @@ public class ThingsBoardInputAgentTest {
         Method convertStringToOffsetDateTime = ThingsBoardInputAgent.class.getDeclaredMethod("convertStringToOffsetDateTime", String.class);
         convertStringToOffsetDateTime.setAccessible(true);
         // Test with a valid string
-        long ts_01 = 123456;
+        long ts_01 = 1234560000000L;
         Date date = new java.util.Date(ts_01);
     	SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    	sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
     	Object ts01 = sdf.format(date);
         OffsetDateTime time = (OffsetDateTime) convertStringToOffsetDateTime.invoke(testAgent, ts01.toString());
-        Assert.assertEquals(1970, time.getYear());
-        Assert.assertEquals(1, time.getMonth().getValue());
-        Assert.assertEquals(1, time.getDayOfMonth());
-        Assert.assertEquals(7, time.getHour());
-        Assert.assertEquals(32, time.getMinute());
+        Assert.assertEquals(2009, time.getYear());
+        Assert.assertEquals(2, time.getMonth().getValue());
+        Assert.assertEquals(13, time.getDayOfMonth());
+        Assert.assertEquals(21, time.getHour());
+        Assert.assertEquals(20, time.getMinute());
         Assert.assertEquals(0, time.getOffset().getTotalSeconds());
         Assert.assertEquals(ZoneOffset.UTC, time.getOffset());
     }
