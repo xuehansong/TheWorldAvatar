@@ -81,7 +81,7 @@ The endpoint for retrieval of historical timeseries data has the following struc
 http(s)://host:port/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys=key1,key2&startTs=[start]&endTs=[end]&interval=[interval]&limit=[no.]&agg=[..]
 ```
 where `[keys]` represents the types of readings to be retrieved from the server, `[startTs]` and `[endTs]` represents the starting and ending unix timestamps
-in milliseconds, `[interval]` represents the aggregation interval in milliseconds, `[limit]` represents the max amount of data points to be retrieved, 
+in milliseconds, `[interval]` represents the aggregation interval in milliseconds, `[limit]` represents the maximum amount of data points to be retrieved, 
 `[agg]` represents one of the aggregation function: MIN, MAX, AVG, SUM, COUNT, NONE. 
 
 #### Example readings
@@ -113,15 +113,15 @@ to explain the set-up of a knowledge graph triple store or Postgres database.
 ### Property files
 For running the agent, three property files are required:
 - One [property file for the agent](#agent-properties) itself pointing to the mapping configuration.
-- One [property file for the time-series client](#time-series-client-properties) defining how ot access the database and SPARQL endpoint.
+- One [property file for the time-series client](#time-series-client-properties) defining how to access the database and SPARQL endpoint.
 - One [property file for the ThingsBoard API](#api-properties) defining the access credentials(username, password, device Id), path URL and keys.
 
 #### Agent properties
 The agent property file only needs to contain a single line:
 ```
-thingsboard.mappingfolder=[mappings_folder_environment_variable]
+thingsboard.mappingfolder=THINGSBOARD_AGENT_MAPPINGS
 ```
-where `[mappings_folder_environment_variable]` is the environment variable pointing to the location of a folder containing JSON key to IRI mappings. 
+where `THINGSBOARD_AGENT_MAPPINGS` is the environment variable pointing to the location of a folder containing JSON key to IRI mappings. 
 An example property file can be found in the `config` folder under `agent.properties`. See [this section](#mapping-files) of the README for an 
 explanation of the mapping files.
 
@@ -148,7 +148,7 @@ More information can be found in the example property file `api.properties` in t
 
 #### Mapping files
 What are the mapping files and why are they required? The mapping files define how data received from the API is connected
-to the knowledge graph (KG). Specifically, each JSON key in the readingsrepresents a specific measure that needs to be 
+to the knowledge graph (KG). Specifically, each JSON key in the readings represents a specific measure that needs to be 
 represented by an IRI, if it should be saved in the database.
 
 Furthermore, measures can be grouped into one time-series (will result in one time-series instance per group in the KG).
@@ -177,53 +177,41 @@ To ensure that the same IRIs are used for each JSON key, the mapping files are s
 necessary when some of them are automatically generated). Note, that if you change any mapping in preceding runs, they 
 will be seen as new time-series, which can result in inconsistencies in both the KG and database.
 
-Examples for the structure of the mapping folder and files can be found in the `mapping` folder within the `config` 
+Examples for the structure of the mapping folder and file can be found in the `mapping` folder within the `config` 
 folder. 
 
-### Setting up the Agent as a web servlet
-
-#### Install tomcat
-To run the agent on your PC, you must have tomcat installed on your machine. 
-It can be installed [here] ( https://tomcat.apache.org/download-90.cgi).
-
-#### Building the War
-To build the war file of this agent, you need to have [Maven](https://maven.apache.org/) installed. The current version
-of the code was tested with version 3.8.1 running on Windows. In addition, the machine needs to be able to access the 
-CMCL Maven repository for downloading the JPS base lib dependency and default logging configuration. Check the 
-[wiki](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Packages) for how to set it up. Example Maven settings 
-files are provided in the `.m2` folder.
-
-If everything is set up, the war file can be built using the following command in a terminal from within the 
-`ThingsBoardInputAgent` folder (in which the `pom.xml` is located):
+### Building the ThingsBoard Agent
+The ThingsBoard Agent is set up to use the Maven repository at https://maven.pkg.github.com/cambridge-cares/TheWorldAvatar/ (in addition to Maven central).
+You'll need to provide  your credentials in single-word text files located like this:
 ```
-mvn clean package
+./credentials/
+    repo_username.txt
+    repo_password.txt
 ```
 
-Maven will automatically run all unit tests before packaging. The war file can then be found in a `output` folder.
+repo_username.txt should contain your github username, and repo_password.txt your github [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token),
+which must have a 'scope' that [allows you to publish and install packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry#authenticating-to-github-packages).
+
+Modify `api.properties` and `client.properties` in the `config` folder accordingly. You should not modify the `agent.properties` file as the Dockerfile will set the environment variable 
+THINGSBOARD_AGENT_MAPPINGS to point towards the location of the mapping folder. The Dockerfile will copy all 3 properties files and mapping folder and set environment variables pointing 
+to their location thus you do not need to shift the properties files and mapping folder nor add in environment variables manually.
+
+To build and start the agent, open up the command prompt in the same directory as this README, run
+```
+docker-compose up -d
+```
+
+The agent is reachable at "thingsboard-agent/retrieve" on localhost port 1010.
 
 
 #### Run the agent
-To run the agent, firstly, copy the mapping folder and the 3 properties files in the `config` folder and place them in a new folder somewhere else.
-Modify the mapping file and properties files accordingly. Add new environment variables pointing to the location of the mapping folder and the 3 properties files.
-
-![Shows the environment variables pointing to the location of the mapping folder and the 3 properties files.](docs/img/environment_variables.PNG "Environment variables")
-
-As described [above](#mapping-files), mapping configurations are required as well (the location can be set in the agent property file). 
-These mapping files need to be kept persistent, so once the agent is run they should not be modified anymore. 
-
-Copy the war file found in the `output` folder and paste it into the webapps folder within the tomcat directory. 
-By default the webapps folder can be found by following this path C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps.
-Next, start up tomcat 9.0, this will allow the web servlet to be deployed successfully.
-
-To run the agent, a POST request must be sent to http://localhost:8080/thingsboard_inputAgent/retrieve with a correct JSON Object.
-Follow the request shown below. The values THINGSBOARD_AGENT_AGENTPROPERTIES, THINGSBOARD_AGENT_APIPROPERTIES, THINGSBOARD_AGENT_CLIENTPROPERTIES
-are the environment variables pointing to the location of the 3 properties files. These can be changed depending on what you named the environment variables
-but the keys agentProperties, apiProperties, clientProperties must be fixed.
+To run the agent, a POST request must be sent to http://localhost:1010/thingsboard-agent/retrieve with a correct JSON Object.
+Follow the request shown below.
 
 ```
-POST http://localhost:8080/thingsboard_inputAgent/retrieve
+POST http://localhost:1010/thingsboard-agent/retrieve
 Content-Type: application/json
-{"agentProperties":"THINGSBOARD_AGENT_AGENTPROPERTIES","apiProperties":"THINGSBOARD_AGENT_APIPROPERTIES","clientProperties":"THINGSBOARD_AGENT_CLIENTPROPERTIES"}
+{"agentProperties":"THINGSBOARD_AGENTPROPERTIES","apiProperties":"THINGSBOARD_APIPROPERTIES","clientProperties":"THINGSBOARD_CLIENTPROPERTIES"}
 ```
 
 If the agent run successfully, you should see a JSON Object returned back that is similar to the one shown below.
