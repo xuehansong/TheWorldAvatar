@@ -6,16 +6,16 @@
 		metadata-complete="false" 
 		version="3.1">
 
-	<display-name>thingsboard_inputAgent</display-name>
+	<display-name>thingsboard-agent</display-name>
 	<description>Simple servlet to accept incoming request and retrieve readings from the ThingsBoard database.</description>
 
 	<servlet>
-		<servlet-name>thingsboard_inputAgent</servlet-name>
+		<servlet-name>ThingsBoardAgentServlet</servlet-name>
 		<servlet-class>uk.ac.cam.cares.jps.agent.thingsboard.ThingsBoardInputAgentLauncher</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
-		<servlet-name>thingsboard_inputAgent</servlet-name>
+		<servlet-name>ThingsBoardAgentServlet</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
 

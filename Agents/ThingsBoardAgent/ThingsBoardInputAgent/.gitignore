@@ -1,5 +1,5 @@
-*.jar
+*.war
 */target
-
+*/output
 # IntelliJ specific files
 *.iml
