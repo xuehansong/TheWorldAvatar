@@ -20,7 +20,7 @@ public class IriMapper {
 		public String type;
 	}
 	
-	public void add(String iri, String id, String type) {
+	public void add(String iri, String id, String type) {	
 		
 		IriMapping newinst= new IriMapping();
 		newinst.iri=iri;
@@ -33,8 +33,8 @@ public class IriMapper {
 		int size=list.size();
 		String resultiri=null;
 		for (int r=0;r<size;r++) {
-			if(id.contentEquals(list.get(size).id)&&type.contentEquals(list.get(size).type)) {
-				resultiri=list.get(size).iri;
+			if(id.contentEquals(list.get(r).id)&&type.contentEquals(list.get(r).type)) {
+				resultiri=list.get(r).iri;
 			}
 		}
 		
@@ -81,7 +81,7 @@ public class IriMapper {
 	
 	
 	public List<IriMapping> deserialize(String filePath) throws IOException {
-	    Reader readpath=new FileReader(filePath);
+		Reader readpath=new FileReader(filePath); 
 	    CSVReader csvReader = new CSVReader(readpath);
 	    List<String[]> listofcontent = new ArrayList<>();
 	    listofcontent = csvReader.readAll();
